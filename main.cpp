@@ -25,7 +25,7 @@ int main() {
   atexit(GUI.StopParserThread);
 
   try {
-    System s;
+    PTAM::System s;
     s.Run();
   } catch (CVD::Exceptions::All e) {
     std::cout << "\n!! Failed to run system; got exception. \n";
