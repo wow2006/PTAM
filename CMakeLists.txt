@@ -9,6 +9,7 @@ list(
 
 find_package(CVD REQUIRED)
 find_package(TooN REQUIRED)
+find_package(GVars3 REQUIRED)
 
 add_executable(
   PTAM_DEMO
@@ -26,6 +27,7 @@ target_link_libraries(
   PUBLIC
   CVD::CVD
   TooN::TooN
+  GVars3::GVars
 )
 
 target_compile_features(
