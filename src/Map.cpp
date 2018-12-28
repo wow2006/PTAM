@@ -1,42 +1,36 @@
 // Copyright 2008 Isis Innovation Limited
-#include "Map.h"
-#include "MapPoint.h"
+#include "PTAM/Map.hpp"
+#include "PTAM/MapPoint.hpp"
 
-Map::Map()
-{
-  Reset();
-}
+namespace PTAM {
 
-void Map::Reset()
-{
-  for(unsigned int i=0; i<vpPoints.size(); i++)
+Map::Map() { Reset(); }
+
+void Map::Reset() {
+  for (unsigned int i = 0; i < vpPoints.size(); i++) {
     delete vpPoints[i];
+  }
   vpPoints.clear();
   bGood = false;
   EmptyTrash();
 }
 
-void Map::MoveBadPointsToTrash()
-{
+void Map::MoveBadPointsToTrash() {
   int nBad = 0;
-  for(int i = vpPoints.size()-1; i>=0; i--)
-    {
-      if(vpPoints[i]->bBad)
-	{
-	  vpPointsTrash.push_back(vpPoints[i]);
-	  vpPoints.erase(vpPoints.begin() + i);
-	  nBad++;
-	}
-    };
-};
+  for (int i = vpPoints.size() - 1; i >= 0; i--) {
+    if (vpPoints[i]->bBad) {
+      vpPointsTrash.push_back(vpPoints[i]);
+      vpPoints.erase(vpPoints.begin() + i);
+      nBad++;
+    }
+  }
+}
 
-void Map::EmptyTrash()
-{
-  for(unsigned int i=0; i<vpPointsTrash.size(); i++)
+void Map::EmptyTrash() {
+  for (unsigned int i = 0; i < vpPointsTrash.size(); i++) {
     delete vpPointsTrash[i];
+  }
+
   vpPointsTrash.clear();
-};
-
-
-
-
+}
+} // namespace PTAM
