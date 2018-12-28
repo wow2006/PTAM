@@ -10,7 +10,7 @@
 //
 #ifndef __SYSTEM_H
 #define __SYSTEM_H
-#include "GLWindow2.h"
+#include "PTAM/GLWindow2.hpp"
 #include "VideoSource.h"
 
 #include <cvd/byte.h>
