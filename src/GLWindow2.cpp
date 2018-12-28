@@ -5,10 +5,10 @@
 #include <gvars3/GStringUtil.h>
 #include <gvars3/instances.h>
 
-#include "PTAM/GLWindow2.h"
+#include "PTAM/GLWindow2.hpp"
 
-#include "GLWindowMenu.h"
-#include "OpenGL.h"
+#include "PTAM/GLWindowMenu.hpp"
+#include "PTAM/OpenGL.hpp"
 
 using namespace CVD;
 using namespace std;
@@ -108,7 +108,8 @@ void GLWindow2::SetupUnitOrtho() {
 void GLWindow2::SetupWindowOrtho() {
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
-  glOrtho(size());
+  const auto temp = size();
+  glOrtho(0.0f, temp.x, temp.y, 0.0f, 0.0f, 1.0f);
 }
 
 void GLWindow2::SetupVideoOrtho() {
