@@ -9,36 +9,53 @@
 // everything is stored as lists of pointers,
 // and map points are not erased if they are bad:
 // they are moved to the trash list. That way
-// old pointers which other threads are using are not 
+// old pointers which other threads are using are not
 // invalidated!
+#pragma once
 
-#ifndef __MAP_H
-#define __MAP_H
 #include <vector>
+
 #include <TooN/se3.h>
 #include <cvd/image.h>
+
+namespace PTAM {
 
 struct MapPoint;
 struct KeyFrame;
 
-struct Map
-{
+struct Map {
+  /** 
+  * @brief 
+  */
   Map();
-  inline bool IsGood() {return bGood;}
+
+  /** 
+  * @brief 
+  * 
+  * @return 
+  */
+  bool IsGood() { return bGood; }
+
+  /** 
+  * @brief 
+  */
   void Reset();
-  
+
+  /** 
+  * @brief 
+  */
   void MoveBadPointsToTrash();
+
+  /** 
+  * @brief 
+  */
   void EmptyTrash();
-  
-  std::vector<MapPoint*> vpPoints;
-  std::vector<MapPoint*> vpPointsTrash;
-  std::vector<KeyFrame*> vpKeyFrames;
+
+  std::vector<MapPoint *> vpPoints;
+  std::vector<MapPoint *> vpPointsTrash;
+  std::vector<KeyFrame *> vpKeyFrames;
 
   bool bGood;
 };
 
-
-
-
-#endif
-
+} // namespace PTAM
