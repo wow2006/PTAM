@@ -25,6 +25,7 @@ target_link_libraries(
   ${CVD_LIBRARY}
   ${X11_LIBRARIES}
   OpenGL::GL
+  OpenGL::GLU
 )
 
 target_include_directories(
