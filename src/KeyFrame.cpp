@@ -1,5 +1,6 @@
 // Copyright 2008 Isis Innovation Limited
 #include <cvd/fast_corner.h>
+#include <cvd/colourspace_convert.h>
 #include <cvd/vision.h>
 
 #include "PTAM/KeyFrame.hpp"
@@ -12,7 +13,7 @@ using namespace GVars3;
 
 namespace PTAM {
 
-void KeyFrame::MakeKeyFrame_Lite(BasicImage<byte> &im) {
+void KeyFrame::MakeKeyFrame_Lite(BasicImage<CVD::byte> &im) {
   // Perpares a Keyframe from an image. Generates pyramid levels, does FAST
   // detection, etc. Does not fully populate the keyframe struct, but only does
   // the bits needed for the tracker; e.g. does not perform FAST nonmax
