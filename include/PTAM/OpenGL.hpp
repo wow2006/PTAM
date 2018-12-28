@@ -1,6 +1,6 @@
 // Copyright 2008 Isis Innovation Limited
-#ifndef __OPENGL_INCLUDES_H
-#define __OPENGL_INCLUDES_H
+#ifndef __OPENGL_INCLUDES_HPP
+#define __OPENGL_INCLUDES_HPP
 
 #ifdef _LINUX
 #include <GL/gl.h>
@@ -18,4 +18,4 @@
 #endif
 
 #include <cvd/gl_helpers.h>
-#endif
+#endif //! __OPENGL_INCLUDES_HPP
