@@ -1,47 +1,35 @@
 // Copyright 2008 Isis Innovation Limited
 // This is the main extry point for PTAM
-#include <stdlib.h>
+#include <cstdlib>
 #include <iostream>
+
 #include <gvars3/instances.h>
+
 #include "System.h"
 
-
-using namespace std;
 using namespace GVars3;
 
-int main()
-{
-  cout << "  Welcome to PTAM " << endl;
-  cout << "  --------------- " << endl;
-  cout << "  Parallel tracking and mapping for Small AR workspaces" << endl;
-  cout << "  Copyright (C) Isis Innovation Limited 2008 " << endl;  
-  cout << endl;
-  cout << "  Parsing settings.cfg ...." << endl;
+int main() {
+  std::cout << "  Welcome to PTAM \n";
+  std::cout << "  --------------- \n";
+  std::cout << "  Parallel tracking and mapping for Small AR workspaces\n";
+  std::cout << "  Copyright (C) Isis Innovation Limited 2008 \n";
+  std::cout << "\n  Parsing settings.cfg ....\n";
+
+  // Parse Settings file
   GUI.LoadFile("settings.cfg");
-  
-  GUI.StartParserThread(); // Start parsing of the console input
-  atexit(GUI.StopParserThread); 
-  
-  try
-    {
-      System s;
-      s.Run();
-    }
-  catch(CVD::Exceptions::All e)
-    {
-      cout << endl;
-      cout << "!! Failed to run system; got exception. " << endl;
-      cout << "   Exception was: " << endl;
-      cout << e.what << endl;
-    }
+
+  // Start parsing of the console input
+  GUI.StartParserThread();
+
+  atexit(GUI.StopParserThread);
+
+  try {
+    System s;
+    s.Run();
+  } catch (CVD::Exceptions::All e) {
+    std::cout << "\n!! Failed to run system; got exception. \n";
+    std::cout << "   Exception was: \n";
+    std::cout << e.what << endl;
+  }
 }
-
-
-
-
-
-
-
-
-
-
