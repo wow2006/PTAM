@@ -1,5 +1,4 @@
 // Copyright 2008 Isis Innovation Limited
-#define CVD_HAVE_TOON 1
 #define GL_GLEXT_PROTOTYPES 1
 #include "PTAM/ARDriver.hpp"
 
@@ -7,7 +6,16 @@ using namespace GVars3;
 using namespace CVD;
 using namespace std;
 
-static bool CheckFramebufferStatus();
+static bool CheckFramebufferStatus() {
+  GLenum n;
+  n = glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT);
+  if (n == GL_FRAMEBUFFER_COMPLETE_EXT) {
+    return true; // All good
+  }
+
+  cout << "glCheckFrameBufferStatusExt returned an error." << endl;
+  return false;
+}
 
 namespace PTAM {
 
@@ -113,17 +121,6 @@ void ARDriver::MakeFrameBuffer() {
   cout << " .. created FBO." << endl;
   glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
 }
-
-static bool CheckFramebufferStatus() {
-
-  GLenum n;
-  n = glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT);
-  if (n == GL_FRAMEBUFFER_COMPLETE_EXT)
-    return true; // All good
-
-  cout << "glCheckFrameBufferStatusExt returned an error." << endl;
-  return false;
-};
 
 void ARDriver::DrawFBBackGround() {
   static bool bFirstRun = true;
