@@ -1,14 +1,10 @@
 // Copyright 2008 Isis Innovation Limited
-#ifndef __SHI_TOMASI__H
-#define __SHI_TOMASI__H
+#pragma once
 
-#include <cvd/image.h>
 #include <cvd/byte.h>
+#include <cvd/image.h>
 
-
+namespace PTAM {
 double FindShiTomasiScoreAtPoint(CVD::BasicImage<CVD::byte> &image,
-				 int nHalfBoxSize,
-				 CVD::ImageRef irCenter);
-
-
-#endif
+                                 int nHalfBoxSize, CVD::ImageRef irCenter);
+} // namespace PTAM
