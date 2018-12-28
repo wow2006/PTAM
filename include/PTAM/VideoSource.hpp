@@ -11,21 +11,41 @@
 // format as an ImageRef, and GetAndFillFrameBWandRGB should wait for
 // a new frame and then overwrite the passed-as-reference images with
 // GreyScale and Colour versions of the new frame.
-//
+#pragma once
 #include <cvd/image.h>
 #include <cvd/byte.h>
 #include <cvd/rgb.h>
 
+namespace PTAM {
+
 struct VideoSourceData;
 
-class VideoSource
-{
+class VideoSource {
  public:
+  /** 
+  * @brief 
+  */
   VideoSource();
+
+  /** 
+  * @brief 
+  * 
+  * @param imBW
+  * @param imRGB
+  */
   void GetAndFillFrameBWandRGB(CVD::Image<CVD::byte> &imBW, CVD::Image<CVD::Rgb<CVD::byte> > &imRGB);
+
+  /** 
+  * @brief 
+  * 
+  * @return 
+  */
   CVD::ImageRef Size();
   
  private:
   void *mptr;
   CVD::ImageRef mirSize;
 };
+
+} // namespace PTAM
+
