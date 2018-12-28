@@ -19,7 +19,7 @@
 #include "PTAM/GLWindow2.hpp"
 #include "PTAM/OpenGL.hpp"
 
-#include "EyeGame.h"
+#include "PTAM/EyeGame.hpp"
 
 using namespace std;
 using namespace CVD;
