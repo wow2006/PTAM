@@ -11,7 +11,7 @@
 #ifndef __SYSTEM_H
 #define __SYSTEM_H
 #include "PTAM/GLWindow2.hpp"
-#include "VideoSource.h"
+#include "PTAM/VideoSource.hpp"
 
 #include <cvd/byte.h>
 #include <cvd/image.h>
@@ -24,21 +24,20 @@ class Tracker;
 class ARDriver;
 class MapViewer;
 
-
 namespace PTAM {
-/** 
-* @brief 
-*/
+/**
+ * @brief
+ */
 class System {
 public:
-  /** 
-  * @brief 
-  */
+  /**
+   * @brief
+   */
   System();
 
-  /** 
-  * @brief 
-  */
+  /**
+   * @brief
+   */
   void Run();
 
 private:
@@ -64,13 +63,13 @@ private:
 
   bool mbDone;
 
-  /** 
-  * @brief 
-  * 
-  * @param ptr
-  * @param sCommand
-  * @param sParams
-  */
+  /**
+   * @brief
+   *
+   * @param ptr
+   * @param sCommand
+   * @param sParams
+   */
   static void GUICommandCallBack(void *ptr, std::string sCommand,
                                  std::string sParams);
 };
