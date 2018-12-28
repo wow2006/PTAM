@@ -2,6 +2,7 @@
 #include "PTAM/MapPoint.hpp"
 #include "PTAM/KeyFrame.hpp"
 
+namespace PTAM {
 void MapPoint::RefreshPixelVectors() {
   KeyFrame &k = *pPatchSourceKF;
 
@@ -31,3 +32,4 @@ void MapPoint::RefreshPixelVectors() {
   v3PixelDown_W = k.se3CfromW.get_rotation().inverse() *
                   (v3OneDownOnPlane_C - v3CenterOnPlane_C);
 }
+} // namespace PTAM
