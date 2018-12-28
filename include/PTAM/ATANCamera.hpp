@@ -81,7 +81,7 @@ public:
   * 
   * @param v2ImageSize
   */
-  void SetImageSize(Vector<2> v2ImageSize);
+  void SetImageSize(Vector<2> vImageSize);
 
   /** 
   * @brief 
@@ -111,7 +111,7 @@ public:
   * 
   * @param camframe
   */
-  Vector<2> Project(const Vector<2> &camframe);
+  Vector<2> Project(const Vector<2> &vCam);
 
   /** 
   * @brief 
@@ -129,7 +129,7 @@ public:
   * 
   * @return 
   */
-  Vector<2> UnProject(const Vector<2> &imframe); // Inverse operation
+  Vector<2> UnProject(const Vector<2> &v2Im); // Inverse operation
 
   /** 
   * @brief 
@@ -147,7 +147,7 @@ public:
   * 
   * @return 
   */
-  Vector<2> UFBProject(const Vector<2> &camframe);
+  Vector<2> UFBProject(const Vector<2> &vCam);
 
   /** 
   * @brief 
@@ -156,7 +156,7 @@ public:
   * 
   * @return 
   */
-  Vector<2> UFBUnProject(const Vector<2> &camframe);
+  Vector<2> UFBUnProject(const Vector<2> &v2Im);
 
   /** 
   * @brief 
