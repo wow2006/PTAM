@@ -17,7 +17,7 @@
 
 #include "PTAM/GLWindow2.hpp"
 
-#include "Map.h"
+#include "PTAM/Map.hpp"
 
 using namespace TooN;
 
