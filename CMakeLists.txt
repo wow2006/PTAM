@@ -8,6 +8,7 @@ list(
 )
 
 find_package(CVD REQUIRED)
+find_package(TooN REQUIRED)
 
 add_executable(
   PTAM_DEMO
@@ -24,6 +25,7 @@ target_link_libraries(
   PTAM_DEMO
   PUBLIC
   CVD::CVD
+  TooN::TooN
 )
 
 target_compile_features(
