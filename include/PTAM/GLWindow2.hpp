@@ -11,9 +11,10 @@
 #include <TooN/TooN.h>
 #include <cvd/glwindow.h>
 
-class GLWindowMenu;
 
 namespace PTAM {
+
+class GLWindowMenu;
 
 class GLWindow2 : public CVD::GLWindow, public CVD::GLWindow::EventHandler {
 public:
