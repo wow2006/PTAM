@@ -5,6 +5,7 @@
 
 #include <cvd/image_interpolate.h>
 #include <cvd/vector_image_ref.h>
+#include <cvd/colourspace_convert.h>
 #include <cvd/vision.h>
 
 #include <TooN/Cholesky.h>
