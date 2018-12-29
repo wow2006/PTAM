@@ -11,9 +11,10 @@
 
 #include <vector>
 
+#include <cvd/colourspace_convert.h>
+#include <cvd/utility.h>
 #include <cvd/byte.h>
 #include <cvd/image.h>
-#include <cvd/utility.h>
 
 #include <TooN/TooN.h>
 
