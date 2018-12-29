@@ -923,80 +923,83 @@ void MapMaker::BundleAdjust(set<KeyFrame *> sAdjustSet,
   }
 }
 
-//// Mapmaker's try-to-find-a-point-in-a-keyframe code. This is used to update
-//// data association if a bad measurement was detected, or if a point
-//// was never searched for in a keyframe in the first place. This operates
-//// much like the tracker! So most of the code looks just like in
-//// TrackerData.h.
-// bool MapMaker::ReFind_Common(KeyFrame &k, MapPoint &p) {
-//  // abort if either a measurement is already in the map, or we've
-//  // decided that this point-kf combo is beyond redemption
-//  if (p.pMMData->sMeasurementKFs.count(&k) ||
-//      p.pMMData->sNeverRetryKFs.count(&k))
-//    return false;
-//
-//  static PatchFinder Finder;
-//  Vector<3> v3Cam = k.se3CfromW * p.v3WorldPos;
-//  if (v3Cam[2] < 0.001) {
-//    p.pMMData->sNeverRetryKFs.insert(&k);
-//    return false;
-//  }
-//  Vector<2> v2ImPlane = project(v3Cam);
-//  if (v2ImPlane * v2ImPlane >
-//      mCamera.LargestRadiusInImage() * mCamera.LargestRadiusInImage()) {
-//    p.pMMData->sNeverRetryKFs.insert(&k);
-//    return false;
-//  }
-//
-//  Vector<2> v2Image = mCamera.Project(v2ImPlane);
-//  if (mCamera.Invalid()) {
-//    p.pMMData->sNeverRetryKFs.insert(&k);
-//    return false;
-//  }
-//
-//  ImageRef irImageSize = k.aLevels[0].im.size();
-//  if (v2Image[0] < 0 || v2Image[1] < 0 || v2Image[0] > irImageSize[0] ||
-//      v2Image[1] > irImageSize[1]) {
-//    p.pMMData->sNeverRetryKFs.insert(&k);
-//    return false;
-//  }
-//
-//  Matrix<2> m2CamDerivs = mCamera.GetProjectionDerivs();
-//  Finder.MakeTemplateCoarse(p, k.se3CfromW, m2CamDerivs);
-//
-//  if (Finder.TemplateBad()) {
-//    p.pMMData->sNeverRetryKFs.insert(&k);
-//    return false;
-//  }
-//
-//  bool bFound =
-//      Finder.FindPatchCoarse(ir(v2Image), k, 4); // Very tight search radius!
-//  if (!bFound) {
-//    p.pMMData->sNeverRetryKFs.insert(&k);
-//    return false;
-//  }
-//
-//  // If we found something, generate a measurement struct and put it in the
-//  map Measurement m; m.nLevel = Finder.GetLevel(); m.Source =
-//  Measurement::SRC_REFIND;
-//
-//  if (Finder.GetLevel() > 0) {
-//    Finder.MakeSubPixTemplate();
-//    Finder.IterateSubPixToConvergence(k, 8);
-//    m.v2RootPos = Finder.GetSubPixPos();
-//    m.bSubPix = true;
-//  } else {
-//    m.v2RootPos = Finder.GetCoarsePosAsVector();
-//    m.bSubPix = false;
-//  };
-//
-//  if (k.mMeasurements.count(&p)) {
-//    assert(0); // This should never happen, we checked for this at the start.
-//  }
-//  k.mMeasurements[&p] = m;
-//  p.pMMData->sMeasurementKFs.insert(&k);
-//  return true;
-//}
+// Mapmaker's try-to-find-a-point-in-a-keyframe code. This is used to update
+// data association if a bad measurement was detected, or if a point
+// was never searched for in a keyframe in the first place. This operates
+// much like the tracker! So most of the code looks just like in
+// TrackerData.h.
+bool MapMaker::ReFind_Common(KeyFrame &k, MapPoint &p) {
+  // abort if either a measurement is already in the map, or we've
+  // decided that this point-kf combo is beyond redemption
+  if (p.pMMData->sMeasurementKFs.count(&k) ||
+      p.pMMData->sNeverRetryKFs.count(&k)) {
+    return false;
+  }
+
+  static PatchFinder Finder;
+  Vector<3> v3Cam = k.se3CfromW * p.v3WorldPos;
+  if (v3Cam[2] < 0.001) {
+    p.pMMData->sNeverRetryKFs.insert(&k);
+    return false;
+  }
+
+  Vector<2> v2ImPlane = project(v3Cam);
+  if (v2ImPlane * v2ImPlane >
+      mCamera.LargestRadiusInImage() * mCamera.LargestRadiusInImage()) {
+    p.pMMData->sNeverRetryKFs.insert(&k);
+    return false;
+  }
+
+  Vector<2> v2Image = mCamera.Project(v2ImPlane);
+  if (mCamera.Invalid()) {
+    p.pMMData->sNeverRetryKFs.insert(&k);
+    return false;
+  }
+
+  ImageRef irImageSize = k.aLevels[0].im.size();
+  if (v2Image[0] < 0 || v2Image[1] < 0 || v2Image[0] > irImageSize[0] ||
+      v2Image[1] > irImageSize[1]) {
+    p.pMMData->sNeverRetryKFs.insert(&k);
+    return false;
+  }
+
+  Matrix<2> m2CamDerivs = mCamera.GetProjectionDerivs();
+  Finder.MakeTemplateCoarse(p, k.se3CfromW, m2CamDerivs);
+
+  if (Finder.TemplateBad()) {
+    p.pMMData->sNeverRetryKFs.insert(&k);
+    return false;
+  }
+
+  bool bFound =
+      Finder.FindPatchCoarse(ir(v2Image), k, 4); // Very tight search radius!
+  if (!bFound) {
+    p.pMMData->sNeverRetryKFs.insert(&k);
+    return false;
+  }
+
+  // If we found something, generate a measurement struct and put it in the map
+  Measurement m;
+  m.nLevel = Finder.GetLevel();
+  m.Source = Measurement::SRC_REFIND;
+
+  if (Finder.GetLevel() > 0) {
+    Finder.MakeSubPixTemplate();
+    Finder.IterateSubPixToConvergence(k, 8);
+    m.v2RootPos = Finder.GetSubPixPos();
+    m.bSubPix = true;
+  } else {
+    m.v2RootPos = Finder.GetCoarsePosAsVector();
+    m.bSubPix = false;
+  };
+
+  if (k.mMeasurements.count(&p)) {
+    assert(0); // This should never happen, we checked for this at the start.
+  }
+  k.mMeasurements[&p] = m;
+  p.pMMData->sMeasurementKFs.insert(&k);
+  return true;
+}
 
 // A general data-association update for a single keyframe
 // Do this on a new key-frame when it's passed in by the tracker
@@ -1049,9 +1052,9 @@ int MapMaker::ReFindInSingleKeyFrame(KeyFrame &k) {
 //};
 
 // Is the tracker's camera pose in cloud-cuckoo land?
-// bool MapMaker::IsDistanceToNearestKeyFrameExcessive(KeyFrame &kCurrent) {
-//  return DistToNearestKeyFrame(kCurrent) > mdWiggleScale * 10.0;
-//}
+ bool MapMaker::IsDistanceToNearestKeyFrameExcessive(KeyFrame &kCurrent) {
+  return DistToNearestKeyFrame(kCurrent) > mdWiggleScale * 10.0;
+}
 
 // Find a dominant plane in the map, find an SE3<> to put it as the z=0 plane
 SE3<> MapMaker::CalcPlaneAligner() {
