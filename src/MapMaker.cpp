@@ -677,42 +677,50 @@ bool MapMaker::AddPointEpipolar(KeyFrame &kSrc, KeyFrame &kTarget, int nLevel,
 //  double dDist = sqrt(v3Diff * v3Diff);
 //  return dDist;
 //}
-//
-// vector<KeyFrame *> MapMaker::NClosestKeyFrames(KeyFrame &k, unsigned int N) {
-//  vector<pair<double, KeyFrame *>> vKFandScores;
-//  for (unsigned int i = 0; i < mMap.vpKeyFrames.size(); i++) {
-//    if (mMap.vpKeyFrames[i] == &k)
-//      continue;
-//    double dDist = KeyFrameLinearDist(k, *mMap.vpKeyFrames[i]);
-//    vKFandScores.push_back(make_pair(dDist, mMap.vpKeyFrames[i]));
-//  }
-//  if (N > vKFandScores.size())
-//    N = vKFandScores.size();
-//  partial_sort(vKFandScores.begin(), vKFandScores.begin() + N,
-//               vKFandScores.end());
-//
-//  vector<KeyFrame *> vResult;
-//  for (unsigned int i = 0; i < N; i++)
-//    vResult.push_back(vKFandScores[i].second);
-//  return vResult;
-//}
-//
-// KeyFrame *MapMaker::ClosestKeyFrame(KeyFrame &k) {
-//  double dClosestDist = 9999999999.9;
-//  int nClosest = -1;
-//  for (unsigned int i = 0; i < mMap.vpKeyFrames.size(); i++) {
-//    if (mMap.vpKeyFrames[i] == &k)
-//      continue;
-//    double dDist = KeyFrameLinearDist(k, *mMap.vpKeyFrames[i]);
-//    if (dDist < dClosestDist) {
-//      dClosestDist = dDist;
-//      nClosest = i;
-//    }
-//  }
-//  assert(nClosest != -1);
-//  return mMap.vpKeyFrames[nClosest];
-//}
-//
+
+vector<KeyFrame *> MapMaker::NClosestKeyFrames(KeyFrame &k, unsigned int N) {
+  vector<pair<double, KeyFrame *>> vKFandScores;
+  for (unsigned int i = 0; i < mMap.vpKeyFrames.size(); i++) {
+    if (mMap.vpKeyFrames[i] == &k) {
+      continue;
+    }
+    double dDist = KeyFrameLinearDist(k, *mMap.vpKeyFrames[i]);
+    vKFandScores.push_back(make_pair(dDist, mMap.vpKeyFrames[i]));
+  }
+
+  if (N > vKFandScores.size()) {
+    N = vKFandScores.size();
+  }
+
+  partial_sort(vKFandScores.begin(), vKFandScores.begin() + N,
+               vKFandScores.end());
+
+  vector<KeyFrame *> vResult;
+  for (unsigned int i = 0; i < N; i++) {
+    vResult.push_back(vKFandScores[i].second);
+  }
+  return vResult;
+}
+
+KeyFrame *MapMaker::ClosestKeyFrame(KeyFrame &k) {
+  double dClosestDist = 9999999999.9;
+  int nClosest = -1;
+  for (unsigned int i = 0; i < mMap.vpKeyFrames.size(); i++) {
+    if (mMap.vpKeyFrames[i] == &k) {
+      continue;
+    }
+
+    double dDist = KeyFrameLinearDist(k, *mMap.vpKeyFrames[i]);
+
+    if (dDist < dClosestDist) {
+      dClosestDist = dDist;
+      nClosest = i;
+    }
+  }
+  assert(nClosest != -1);
+  return mMap.vpKeyFrames[nClosest];
+}
+
 // double MapMaker::DistToNearestKeyFrame(KeyFrame &kCurrent) {
 //  KeyFrame *pClosest = ClosestKeyFrame(kCurrent);
 //  double dDist = KeyFrameLinearDist(kCurrent, *pClosest);
