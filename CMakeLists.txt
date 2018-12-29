@@ -7,6 +7,8 @@ list(
   ${CMAKE_SOURCE_DIR}/cmake/modules
 )
 
+find_package(Qt5 5.12 REQUIRED Widgets)
+find_package(Eigen3 REQUIRED)
 find_package(CVD REQUIRED)
 find_package(TooN REQUIRED)
 find_package(GVars3 REQUIRED)
@@ -51,6 +53,9 @@ target_link_libraries(
   CVD::CVD
   TooN::TooN
   GVars3::GVars
+
+  Qt5::Widgets
+  Eigen3::Eigen
 )
 
 target_compile_features(
