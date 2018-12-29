@@ -374,12 +374,14 @@ void MapMaker::ThinCandidates(KeyFrame &k, int nLevel) {
   vector<ImageRef> irBusyLevelPos;
   // Make a list of `busy' image locations, which already have features at the
   // same level or at one level higher.
-  for (meas_it it = k.mMeasurements.begin(); it != k.mMeasurements.end(); it++) {
+  for (meas_it it = k.mMeasurements.begin(); it != k.mMeasurements.end();
+       it++) {
     if (!(it->second.nLevel == nLevel || it->second.nLevel == nLevel + 1)) {
       continue;
     }
 
-    irBusyLevelPos.push_back(ir_rounded(it->second.v2RootPos / LevelScale(nLevel)));
+    irBusyLevelPos.push_back(
+        ir_rounded(it->second.v2RootPos / LevelScale(nLevel)));
   }
 
   // Only keep those candidates further than 10 pixels away from busy positions.
@@ -1147,26 +1149,24 @@ SE3<> MapMaker::CalcPlaneAligner() {
 // Calculates the depth(z-) distribution of map points visible in a keyframe
 // This function is only used for the first two keyframes - all others
 // get this filled in by the tracker
-// void MapMaker::RefreshSceneDepth(KeyFrame *pKF) {
-//  double dSumDepth = 0.0;
-//  double dSumDepthSquared = 0.0;
-//  int nMeas = 0;
-//  for (meas_it it = pKF->mMeasurements.begin(); it !=
-//  pKF->mMeasurements.end();
-//       it++) {
-//    MapPoint &point = *it->first;
-//    Vector<3> v3PosK = pKF->se3CfromW * point.v3WorldPos;
-//    dSumDepth += v3PosK[2];
-//    dSumDepthSquared += v3PosK[2] * v3PosK[2];
-//    nMeas++;
-//  }
-//
-//  assert(nMeas > 2); // If not then something is seriously wrong with this
-//  KF!! pKF->dSceneDepthMean = dSumDepth / nMeas; pKF->dSceneDepthSigma =
-//  sqrt((dSumDepthSquared / nMeas) -
-//                               (pKF->dSceneDepthMean) *
-//                               (pKF->dSceneDepthMean));
-//}
+void MapMaker::RefreshSceneDepth(KeyFrame *pKF) {
+  double dSumDepth = 0.0;
+  double dSumDepthSquared = 0.0;
+  int nMeas = 0;
+  for (meas_it it = pKF->mMeasurements.begin(); it != pKF->mMeasurements.end();
+       it++) {
+    MapPoint &point = *it->first;
+    Vector<3> v3PosK = pKF->se3CfromW * point.v3WorldPos;
+    dSumDepth += v3PosK[2];
+    dSumDepthSquared += v3PosK[2] * v3PosK[2];
+    nMeas++;
+  }
+
+  assert(nMeas > 2); // If not then something is seriously wrong with this KF !!
+  pKF->dSceneDepthMean = dSumDepth / nMeas;
+  pKF->dSceneDepthSigma = sqrt((dSumDepthSquared / nMeas) -
+                               (pKF->dSceneDepthMean) * (pKF->dSceneDepthMean));
+}
 
 void MapMaker::GUICommandCallBack(void *ptr, string sCommand, string sParams) {
   Command c;
