@@ -8,8 +8,7 @@
 // This stores the main functional classes of the system, like the
 // mapmaker, map, tracker etc, and spawns the working threads.
 //
-#ifndef __SYSTEM_H
-#define __SYSTEM_H
+#pragma once
 #include "PTAM/GLWindow2.hpp"
 #include "PTAM/VideoSource.hpp"
 
@@ -75,4 +74,4 @@ private:
 };
 
 } // namespace PTAM
-#endif
+
