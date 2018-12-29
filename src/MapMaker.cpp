@@ -4,7 +4,7 @@
 #include <iostream>
 
 #include <TooN/SVD.h>
-//#include <TooN/SymEigen.h>
+#include <TooN/SymEigen.h>
 
 #include <cvd/vector_image_ref.h>
 
@@ -1042,106 +1042,106 @@ void MapMaker::ApplyGlobalTransformationToMap(SE3<> se3NewFromOld) {
 //}
 
 // Find a dominant plane in the map, find an SE3<> to put it as the z=0 plane
-// SE3<> MapMaker::CalcPlaneAligner() {
-//  unsigned int nPoints = mMap.vpPoints.size();
-//  if (nPoints < 10) {
-//    cout << "  MapMaker: CalcPlane: too few points to calc plane." << endl;
-//    return SE3<>();
-//  };
-//
-//  int nRansacs =
-//      GV2.GetInt("MapMaker.PlaneAlignerRansacs", 100, HIDDEN | SILENT);
-//  Vector<3> v3BestMean;
-//  Vector<3> v3BestNormal;
-//  double dBestDistSquared = 9999999999999999.9;
-//
-//  for (int i = 0; i < nRansacs; i++) {
-//    int nA = rand() % nPoints;
-//    int nB = nA;
-//    int nC = nA;
-//    while (nB == nA)
-//      nB = rand() % nPoints;
-//    while (nC == nA || nC == nB)
-//      nC = rand() % nPoints;
-//
-//    Vector<3> v3Mean = 0.33333333 * (mMap.vpPoints[nA]->v3WorldPos +
-//                                     mMap.vpPoints[nB]->v3WorldPos +
-//                                     mMap.vpPoints[nC]->v3WorldPos);
-//
-//    Vector<3> v3CA =
-//        mMap.vpPoints[nC]->v3WorldPos - mMap.vpPoints[nA]->v3WorldPos;
-//    Vector<3> v3BA =
-//        mMap.vpPoints[nB]->v3WorldPos - mMap.vpPoints[nA]->v3WorldPos;
-//    Vector<3> v3Normal = v3CA ^ v3BA;
-//    if (v3Normal * v3Normal == 0)
-//      continue;
-//    normalize(v3Normal);
-//
-//    double dSumError = 0.0;
-//    for (unsigned int i = 0; i < nPoints; i++) {
-//      Vector<3> v3Diff = mMap.vpPoints[i]->v3WorldPos - v3Mean;
-//      double dDistSq = v3Diff * v3Diff;
-//      if (dDistSq == 0.0)
-//        continue;
-//      double dNormDist = fabs(v3Diff * v3Normal);
-//
-//      if (dNormDist > 0.05)
-//        dNormDist = 0.05;
-//      dSumError += dNormDist;
-//    }
-//    if (dSumError < dBestDistSquared) {
-//      dBestDistSquared = dSumError;
-//      v3BestMean = v3Mean;
-//      v3BestNormal = v3Normal;
-//    }
-//  }
-//
-//  // Done the ransacs, now collect the supposed inlier set
-//  vector<Vector<3>> vv3Inliers;
-//  for (unsigned int i = 0; i < nPoints; i++) {
-//    Vector<3> v3Diff = mMap.vpPoints[i]->v3WorldPos - v3BestMean;
-//    double dDistSq = v3Diff * v3Diff;
-//    if (dDistSq == 0.0)
-//      continue;
-//    double dNormDist = fabs(v3Diff * v3BestNormal);
-//    if (dNormDist < 0.05)
-//      vv3Inliers.push_back(mMap.vpPoints[i]->v3WorldPos);
-//  }
-//
-//  // With these inliers, calculate mean and cov
-//  Vector<3> v3MeanOfInliers = Zeros;
-//  for (unsigned int i = 0; i < vv3Inliers.size(); i++)
-//    v3MeanOfInliers += vv3Inliers[i];
-//  v3MeanOfInliers *= (1.0 / vv3Inliers.size());
-//
-//  Matrix<3> m3Cov = Zeros;
-//  for (unsigned int i = 0; i < vv3Inliers.size(); i++) {
-//    Vector<3> v3Diff = vv3Inliers[i] - v3MeanOfInliers;
-//    m3Cov += v3Diff.as_col() * v3Diff.as_row();
-//  };
-//
-//  // Find the principal component with the minimal variance: this is the plane
-//  // normal
-//  SymEigen<3> sym(m3Cov);
-//  Vector<3> v3Normal = sym.get_evectors()[0];
-//
-//  // Use the version of the normal which points towards the cam center
-//  if (v3Normal[2] > 0)
-//    v3Normal *= -1.0;
-//
-//  Matrix<3> m3Rot = Identity;
-//  m3Rot[2] = v3Normal;
-//  m3Rot[0] = m3Rot[0] - (v3Normal * (m3Rot[0] * v3Normal));
-//  normalize(m3Rot[0]);
-//  m3Rot[1] = m3Rot[2] ^ m3Rot[0];
-//
-//  SE3<> se3Aligner;
-//  se3Aligner.get_rotation() = m3Rot;
-//  Vector<3> v3RMean = se3Aligner * v3MeanOfInliers;
-//  se3Aligner.get_translation() = -v3RMean;
-//
-//  return se3Aligner;
-//}
+SE3<> MapMaker::CalcPlaneAligner() {
+  unsigned int nPoints = mMap.vpPoints.size();
+  if (nPoints < 10) {
+    cout << "  MapMaker: CalcPlane: too few points to calc plane." << endl;
+    return SE3<>();
+  }
+
+  int nRansacs =
+      GV2.GetInt("MapMaker.PlaneAlignerRansacs", 100, HIDDEN | SILENT);
+  Vector<3> v3BestMean;
+  Vector<3> v3BestNormal;
+  double dBestDistSquared = 9999999999999999.9;
+
+  for (int i = 0; i < nRansacs; i++) {
+    int nA = rand() % nPoints;
+    int nB = nA;
+    int nC = nA;
+    while (nB == nA)
+      nB = rand() % nPoints;
+    while (nC == nA || nC == nB)
+      nC = rand() % nPoints;
+
+    Vector<3> v3Mean = 0.33333333 * (mMap.vpPoints[nA]->v3WorldPos +
+                                     mMap.vpPoints[nB]->v3WorldPos +
+                                     mMap.vpPoints[nC]->v3WorldPos);
+
+    Vector<3> v3CA =
+        mMap.vpPoints[nC]->v3WorldPos - mMap.vpPoints[nA]->v3WorldPos;
+    Vector<3> v3BA =
+        mMap.vpPoints[nB]->v3WorldPos - mMap.vpPoints[nA]->v3WorldPos;
+    Vector<3> v3Normal = v3CA ^ v3BA;
+    if (v3Normal * v3Normal == 0)
+      continue;
+    normalize(v3Normal);
+
+    double dSumError = 0.0;
+    for (unsigned int i = 0; i < nPoints; i++) {
+      Vector<3> v3Diff = mMap.vpPoints[i]->v3WorldPos - v3Mean;
+      double dDistSq = v3Diff * v3Diff;
+      if (dDistSq == 0.0)
+        continue;
+      double dNormDist = fabs(v3Diff * v3Normal);
+
+      if (dNormDist > 0.05)
+        dNormDist = 0.05;
+      dSumError += dNormDist;
+    }
+    if (dSumError < dBestDistSquared) {
+      dBestDistSquared = dSumError;
+      v3BestMean = v3Mean;
+      v3BestNormal = v3Normal;
+    }
+  }
+
+  // Done the ransacs, now collect the supposed inlier set
+  vector<Vector<3>> vv3Inliers;
+  for (unsigned int i = 0; i < nPoints; i++) {
+    Vector<3> v3Diff = mMap.vpPoints[i]->v3WorldPos - v3BestMean;
+    double dDistSq = v3Diff * v3Diff;
+    if (dDistSq == 0.0)
+      continue;
+    double dNormDist = fabs(v3Diff * v3BestNormal);
+    if (dNormDist < 0.05)
+      vv3Inliers.push_back(mMap.vpPoints[i]->v3WorldPos);
+  }
+
+  // With these inliers, calculate mean and cov
+  Vector<3> v3MeanOfInliers = Zeros;
+  for (unsigned int i = 0; i < vv3Inliers.size(); i++)
+    v3MeanOfInliers += vv3Inliers[i];
+  v3MeanOfInliers *= (1.0 / vv3Inliers.size());
+
+  Matrix<3> m3Cov = Zeros;
+  for (unsigned int i = 0; i < vv3Inliers.size(); i++) {
+    Vector<3> v3Diff = vv3Inliers[i] - v3MeanOfInliers;
+    m3Cov += v3Diff.as_col() * v3Diff.as_row();
+  };
+
+  // Find the principal component with the minimal variance: this is the plane
+  // normal
+  SymEigen<3> sym(m3Cov);
+  Vector<3> v3Normal = sym.get_evectors()[0];
+
+  // Use the version of the normal which points towards the cam center
+  if (v3Normal[2] > 0)
+    v3Normal *= -1.0;
+
+  Matrix<3> m3Rot = Identity;
+  m3Rot[2] = v3Normal;
+  m3Rot[0] = m3Rot[0] - (v3Normal * (m3Rot[0] * v3Normal));
+  normalize(m3Rot[0]);
+  m3Rot[1] = m3Rot[2] ^ m3Rot[0];
+
+  SE3<> se3Aligner;
+  se3Aligner.get_rotation() = m3Rot;
+  Vector<3> v3RMean = se3Aligner * v3MeanOfInliers;
+  se3Aligner.get_translation() = -v3RMean;
+
+  return se3Aligner;
+}
 
 // Calculates the depth(z-) distribution of map points visible in a keyframe
 // This function is only used for the first two keyframes - all others
