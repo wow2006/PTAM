@@ -36,6 +36,7 @@ add_executable(
   src/CalibCornerPatch.cpp
   #src/CameraCalibrator.cpp
   src/CalibImage.cpp
+  src/VideoSource.cpp
 )
 
 target_include_directories(
