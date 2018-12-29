@@ -15,8 +15,8 @@
 #include "PTAM/MapMaker.hpp"
 #include "PTAM/MapPoint.hpp"
 #include "PTAM/PatchFinder.hpp"
+#include "PTAM/Bundle.hpp"
 
-//#include "Bundle.h"
 //#include "SmallMatrixOpts.h"
 
 //#include <cvd/image_interpolate.h>
@@ -737,26 +737,29 @@ KeyFrame *MapMaker::ClosestKeyFrame(KeyFrame &k) {
 //    return true;
 //  return false;
 //}
-//
-//// Perform bundle adjustment on all keyframes, all map points
-// void MapMaker::BundleAdjustAll() {
-//  // construct the sets of kfs/points to be adjusted:
-//  // in this case, all of them
-//  set<KeyFrame *> sAdj;
-//  set<KeyFrame *> sFixed;
-//  for (unsigned int i = 0; i < mMap.vpKeyFrames.size(); i++)
-//    if (mMap.vpKeyFrames[i]->bFixed)
-//      sFixed.insert(mMap.vpKeyFrames[i]);
-//    else
-//      sAdj.insert(mMap.vpKeyFrames[i]);
-//
-//  set<MapPoint *> sMapPoints;
-//  for (unsigned int i = 0; i < mMap.vpPoints.size(); i++)
-//    sMapPoints.insert(mMap.vpPoints[i]);
-//
-//  BundleAdjust(sAdj, sFixed, sMapPoints, false);
-//}
-//
+
+// Perform bundle adjustment on all keyframes, all map points
+void MapMaker::BundleAdjustAll() {
+  // construct the sets of kfs/points to be adjusted:
+  // in this case, all of them
+  set<KeyFrame *> sAdj;
+  set<KeyFrame *> sFixed;
+  for (unsigned int i = 0; i < mMap.vpKeyFrames.size(); i++) {
+    if (mMap.vpKeyFrames[i]->bFixed) {
+      sFixed.insert(mMap.vpKeyFrames[i]);
+    } else {
+      sAdj.insert(mMap.vpKeyFrames[i]);
+    }
+  }
+
+  set<MapPoint *> sMapPoints;
+  for (unsigned int i = 0; i < mMap.vpPoints.size(); i++) {
+    sMapPoints.insert(mMap.vpPoints[i]);
+  }
+
+  BundleAdjust(sAdj, sFixed, sMapPoints, false);
+}
+
 //// Peform a local bundle adjustment which only adjusts
 //// recently added key-frames
 // void MapMaker::BundleAdjustRecent() {
@@ -803,127 +806,122 @@ KeyFrame *MapMaker::ClosestKeyFrame(KeyFrame &k) {
 //
 //  BundleAdjust(sAdjustSet, sFixedSet, sMapPoints, true);
 //}
-//
-//// Common bundle adjustment code. This creates a bundle-adjust instance,
-//// populates it, and runs it.
-// void MapMaker::BundleAdjust(set<KeyFrame *> sAdjustSet,
-//                            set<KeyFrame *> sFixedSet,
-//                            set<MapPoint *> sMapPoints, bool bRecent) {
-//  Bundle b(mCamera); // Our bundle adjuster
-//  mbBundleRunning = true;
-//  mbBundleRunningIsRecent = bRecent;
-//
-//  // The bundle adjuster does different accounting of keyframes and map
-//  points;
-//  // Translation maps are stored:
-//  map<MapPoint *, int> mPoint_BundleID;
-//  map<int, MapPoint *> mBundleID_Point;
-//  map<KeyFrame *, int> mView_BundleID;
-//  map<int, KeyFrame *> mBundleID_View;
-//
-//  // Add the keyframes' poses to the bundle adjuster. Two parts: first
-//  nonfixed,
-//  // then fixed.
-//  for (set<KeyFrame *>::iterator it = sAdjustSet.begin();
-//       it != sAdjustSet.end(); it++) {
-//    int nBundleID = b.AddCamera((*it)->se3CfromW, (*it)->bFixed);
-//    mView_BundleID[*it] = nBundleID;
-//    mBundleID_View[nBundleID] = *it;
-//  }
-//  for (set<KeyFrame *>::iterator it = sFixedSet.begin(); it !=
-//  sFixedSet.end();
-//       it++) {
-//    int nBundleID = b.AddCamera((*it)->se3CfromW, true);
-//    mView_BundleID[*it] = nBundleID;
-//    mBundleID_View[nBundleID] = *it;
-//  }
-//
-//  // Add the points' 3D position
-//  for (set<MapPoint *>::iterator it = sMapPoints.begin();
-//       it != sMapPoints.end(); it++) {
-//    int nBundleID = b.AddPoint((*it)->v3WorldPos);
-//    mPoint_BundleID[*it] = nBundleID;
-//    mBundleID_Point[nBundleID] = *it;
-//  }
-//
-//  // Add the relevant point-in-keyframe measurements
-//  for (unsigned int i = 0; i < mMap.vpKeyFrames.size(); i++) {
-//    if (mView_BundleID.count(mMap.vpKeyFrames[i]) == 0)
-//      continue;
-//
-//    int nKF_BundleID = mView_BundleID[mMap.vpKeyFrames[i]];
-//    for (meas_it it = mMap.vpKeyFrames[i]->mMeasurements.begin();
-//         it != mMap.vpKeyFrames[i]->mMeasurements.end(); it++) {
-//      if (mPoint_BundleID.count(it->first) == 0)
-//        continue;
-//      int nPoint_BundleID = mPoint_BundleID[it->first];
-//      b.AddMeas(nKF_BundleID, nPoint_BundleID, it->second.v2RootPos,
-//                LevelScale(it->second.nLevel) *
-//                LevelScale(it->second.nLevel));
-//    }
-//  }
-//
-//  // Run the bundle adjuster. This returns the number of successful iterations
-//  int nAccepted = b.Compute(&mbBundleAbortRequested);
-//
-//  if (nAccepted < 0) {
-//    // Crap: - LM Ran into a serious problem!
-//    // This is probably because the initial stereo was messed up.
-//    // Get rid of this map and start again!
-//    cout << "!! MapMaker: Cholesky failure in bundle adjust. " << endl
-//         << "   The map is probably corrupt: Ditching the map. " << endl;
-//    mbResetRequested = true;
-//    return;
-//  }
-//
-//  // Bundle adjustment did some updates, apply these to the map
-//  if (nAccepted > 0) {
-//
-//    for (map<MapPoint *, int>::iterator itr = mPoint_BundleID.begin();
-//         itr != mPoint_BundleID.end(); itr++)
-//      itr->first->v3WorldPos = b.GetPoint(itr->second);
-//
-//    for (map<KeyFrame *, int>::iterator itr = mView_BundleID.begin();
-//         itr != mView_BundleID.end(); itr++)
-//      itr->first->se3CfromW = b.GetCamera(itr->second);
-//    if (bRecent)
-//      mbBundleConverged_Recent = false;
-//    mbBundleConverged_Full = false;
-//  };
-//
-//  if (b.Converged()) {
-//    mbBundleConverged_Recent = true;
-//    if (!bRecent)
-//      mbBundleConverged_Full = true;
-//  }
-//
-//  mbBundleRunning = false;
-//  mbBundleAbortRequested = false;
-//
-//  // Handle outlier measurements:
-//  vector<pair<int, int>> vOutliers_PC_pair = b.GetOutlierMeasurements();
-//  for (unsigned int i = 0; i < vOutliers_PC_pair.size(); i++) {
-//    MapPoint *pp = mBundleID_Point[vOutliers_PC_pair[i].first];
-//    KeyFrame *pk = mBundleID_View[vOutliers_PC_pair[i].second];
-//    Measurement &m = pk->mMeasurements[pp];
-//    if (pp->pMMData->GoodMeasCount() <= 2 ||
-//        m.Source == Measurement::SRC_ROOT) // Is the original source kf
-//                                           // considered an outlier? That's
-//                                           bad.
-//      pp->bBad = true;
-//    else {
-//      // Do we retry it? Depends where it came from!!
-//      if (m.Source == Measurement::SRC_TRACKER ||
-//          m.Source == Measurement::SRC_EPIPOLAR)
-//        mvFailureQueue.push_back(pair<KeyFrame *, MapPoint *>(pk, pp));
-//      else
-//        pp->pMMData->sNeverRetryKFs.insert(pk);
-//      pk->mMeasurements.erase(pp);
-//      pp->pMMData->sMeasurementKFs.erase(pk);
-//    }
-//  }
-//}
-//
+
+// Common bundle adjustment code. This creates a bundle-adjust instance,
+// populates it, and runs it.
+void MapMaker::BundleAdjust(set<KeyFrame *> sAdjustSet,
+                            set<KeyFrame *> sFixedSet,
+                            set<MapPoint *> sMapPoints, bool bRecent) {
+  Bundle b(mCamera); // Our bundle adjuster
+  mbBundleRunning = true;
+  mbBundleRunningIsRecent = bRecent;
+
+  // The bundle adjuster does different accounting of keyframes and map points;
+  // Translation maps are stored:
+  map<MapPoint *, int> mPoint_BundleID;
+  map<int, MapPoint *> mBundleID_Point;
+  map<KeyFrame *, int> mView_BundleID;
+  map<int, KeyFrame *> mBundleID_View;
+
+  // Add the keyframes' poses to the bundle adjuster. Two parts: first nonfixed,
+  // then fixed.
+  for (set<KeyFrame *>::iterator it = sAdjustSet.begin();
+       it != sAdjustSet.end(); it++) {
+    int nBundleID = b.AddCamera((*it)->se3CfromW, (*it)->bFixed);
+    mView_BundleID[*it] = nBundleID;
+    mBundleID_View[nBundleID] = *it;
+  }
+  for (set<KeyFrame *>::iterator it = sFixedSet.begin(); it != sFixedSet.end();
+       it++) {
+    int nBundleID = b.AddCamera((*it)->se3CfromW, true);
+    mView_BundleID[*it] = nBundleID;
+    mBundleID_View[nBundleID] = *it;
+  }
+
+  // Add the points' 3D position
+  for (set<MapPoint *>::iterator it = sMapPoints.begin();
+       it != sMapPoints.end(); it++) {
+    int nBundleID = b.AddPoint((*it)->v3WorldPos);
+    mPoint_BundleID[*it] = nBundleID;
+    mBundleID_Point[nBundleID] = *it;
+  }
+
+  // Add the relevant point-in-keyframe measurements
+  for (unsigned int i = 0; i < mMap.vpKeyFrames.size(); i++) {
+    if (mView_BundleID.count(mMap.vpKeyFrames[i]) == 0)
+      continue;
+
+    int nKF_BundleID = mView_BundleID[mMap.vpKeyFrames[i]];
+    for (meas_it it = mMap.vpKeyFrames[i]->mMeasurements.begin();
+         it != mMap.vpKeyFrames[i]->mMeasurements.end(); it++) {
+      if (mPoint_BundleID.count(it->first) == 0)
+        continue;
+      int nPoint_BundleID = mPoint_BundleID[it->first];
+      b.AddMeas(nKF_BundleID, nPoint_BundleID, it->second.v2RootPos,
+                LevelScale(it->second.nLevel) * LevelScale(it->second.nLevel));
+    }
+  }
+
+  // Run the bundle adjuster. This returns the number of successful iterations
+  int nAccepted = b.Compute(&mbBundleAbortRequested);
+
+  if (nAccepted < 0) {
+    // Crap: - LM Ran into a serious problem!
+    // This is probably because the initial stereo was messed up.
+    // Get rid of this map and start again!
+    cout << "!! MapMaker: Cholesky failure in bundle adjust. " << endl
+         << "   The map is probably corrupt: Ditching the map. " << endl;
+    mbResetRequested = true;
+    return;
+  }
+
+  // Bundle adjustment did some updates, apply these to the map
+  if (nAccepted > 0) {
+
+    for (map<MapPoint *, int>::iterator itr = mPoint_BundleID.begin();
+         itr != mPoint_BundleID.end(); itr++)
+      itr->first->v3WorldPos = b.GetPoint(itr->second);
+
+    for (map<KeyFrame *, int>::iterator itr = mView_BundleID.begin();
+         itr != mView_BundleID.end(); itr++)
+      itr->first->se3CfromW = b.GetCamera(itr->second);
+    if (bRecent)
+      mbBundleConverged_Recent = false;
+    mbBundleConverged_Full = false;
+  };
+
+  if (b.Converged()) {
+    mbBundleConverged_Recent = true;
+    if (!bRecent)
+      mbBundleConverged_Full = true;
+  }
+
+  mbBundleRunning = false;
+  mbBundleAbortRequested = false;
+
+  // Handle outlier measurements:
+  vector<pair<int, int>> vOutliers_PC_pair = b.GetOutlierMeasurements();
+  for (unsigned int i = 0; i < vOutliers_PC_pair.size(); i++) {
+    MapPoint *pp = mBundleID_Point[vOutliers_PC_pair[i].first];
+    KeyFrame *pk = mBundleID_View[vOutliers_PC_pair[i].second];
+    Measurement &m = pk->mMeasurements[pp];
+    if (pp->pMMData->GoodMeasCount() <= 2 ||
+        m.Source == Measurement::SRC_ROOT) // Is the original source kf
+      // considered an outlier? That'sbad.
+      pp->bBad = true;
+    else {
+      // Do we retry it? Depends where it came from!!
+      if (m.Source == Measurement::SRC_TRACKER ||
+          m.Source == Measurement::SRC_EPIPOLAR)
+        mvFailureQueue.push_back(pair<KeyFrame *, MapPoint *>(pk, pp));
+      else
+        pp->pMMData->sNeverRetryKFs.insert(pk);
+      pk->mMeasurements.erase(pp);
+      pp->pMMData->sMeasurementKFs.erase(pk);
+    }
+  }
+}
+
 //// Mapmaker's try-to-find-a-point-in-a-keyframe code. This is used to update
 //// data association if a bad measurement was detected, or if a point
 //// was never searched for in a keyframe in the first place. This operates
