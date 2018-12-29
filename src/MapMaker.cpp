@@ -6,14 +6,14 @@
 #include <TooN/SVD.h>
 //#include <TooN/SymEigen.h>
 
-
 #include <gvars3/instances.h>
 
 #include "PTAM/MapMaker.hpp"
+#include "PTAM/MapPoint.hpp"
+#include "PTAM/KeyFrame.hpp"
 
 //#include "Bundle.h"
 //#include "HomographyInit.h"
-//#include "MapPoint.h"
 //#include "PatchFinder.h"
 //#include "SmallMatrixOpts.h"
 
@@ -152,29 +152,32 @@ bool MapMaker::ResetDone() const { return mbResetDone; }
 
 // HandleBadPoints() Does some heuristic checks on all points in the map to see
 // if they should be flagged as bad, based on tracker feedback.
-// void MapMaker::HandleBadPoints() {
-//  // Did the tracker see this point as an outlier more often than as an
-//  inlier? for (unsigned int i = 0; i < mMap.vpPoints.size(); i++) {
-//    MapPoint &p = *mMap.vpPoints[i];
-//    if (p.nMEstimatorOutlierCount > 20 &&
-//        p.nMEstimatorOutlierCount > p.nMEstimatorInlierCount)
-//      p.bBad = true;
-//  }
-//
-//  // All points marked as bad will be erased - erase all records of them
-//  // from keyframes in which they might have been measured.
-//  for (unsigned int i = 0; i < mMap.vpPoints.size(); i++)
-//    if (mMap.vpPoints[i]->bBad) {
-//      MapPoint *p = mMap.vpPoints[i];
-//      for (unsigned int j = 0; j < mMap.vpKeyFrames.size(); j++) {
-//        KeyFrame &k = *mMap.vpKeyFrames[j];
-//        if (k.mMeasurements.count(p))
-//          k.mMeasurements.erase(p);
-//      }
-//    }
-//  // Move bad points to the trash list.
-//  mMap.MoveBadPointsToTrash();
-//}
+void MapMaker::HandleBadPoints() {
+  // Did the tracker see this point as an outlier more often than as an
+  //inlier ? 
+  for (unsigned int i = 0; i < mMap.vpPoints.size(); i++) {
+    MapPoint &p = *mMap.vpPoints[i];
+    if (p.nMEstimatorOutlierCount > 20 &&
+        p.nMEstimatorOutlierCount > p.nMEstimatorInlierCount) {
+      p.bBad = true;
+    }
+  }
+
+  // All points marked as bad will be erased - erase all records of them
+  // from keyframes in which they might have been measured.
+  for (unsigned int i = 0; i < mMap.vpPoints.size(); i++)
+    if (mMap.vpPoints[i]->bBad) {
+      MapPoint *p = mMap.vpPoints[i];
+      for (unsigned int j = 0; j < mMap.vpKeyFrames.size(); j++) {
+        KeyFrame &k = *mMap.vpKeyFrames[j];
+        if (k.mMeasurements.count(p)) {
+          k.mMeasurements.erase(p);
+        }
+      }
+    }
+  // Move bad points to the trash list.
+  mMap.MoveBadPointsToTrash();
+}
 
 MapMaker::~MapMaker() {
   mbBundleAbortRequested = true;
