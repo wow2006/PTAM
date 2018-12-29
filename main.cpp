@@ -5,9 +5,9 @@
 
 #include <gvars3/instances.h>
 
-#include "PTAM/Systam.hpp"
+#include <cvd/exceptions.h>
 
-using namespace GVars3;
+#include "PTAM/System.hpp"
 
 int main() {
   std::cout << "  Welcome to PTAM \n";
@@ -17,12 +17,12 @@ int main() {
   std::cout << "\n  Parsing settings.cfg ....\n";
 
   // Parse Settings file
-  GUI.LoadFile("settings.cfg");
+  GVars3::GUI.LoadFile("settings.cfg");
 
   // Start parsing of the console input
-  GUI.StartParserThread();
+  GVars3::GUI.StartParserThread();
 
-  atexit(GUI.StopParserThread);
+  std::atexit(GVars3::GUI.StopParserThread);
 
   try {
     PTAM::System s;
@@ -30,6 +30,6 @@ int main() {
   } catch (CVD::Exceptions::All e) {
     std::cout << "\n!! Failed to run system; got exception. \n";
     std::cout << "   Exception was: \n";
-    std::cout << e.what << endl;
+    std::cout << e.what << std::endl;
   }
 }

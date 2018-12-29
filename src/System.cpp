@@ -1,16 +1,19 @@
 // Copyright 2008 Isis Innovation Limited
 #include <cstdlib>
 
+#include <TooN/TooN.h>
+
 #include <gvars3/instances.h>
 
 #include "PTAM/System.hpp"
 
-#include "ARDriver.h"
-#include "ATANCamera.h"
-#include "MapMaker.h"
-#include "MapViewer.h"
-#include "OpenGL.h"
-#include "Tracker.h"
+#include "PTAM/Map.hpp"
+#include "PTAM/OpenGL.hpp"
+#include "PTAM/Tracker.hpp"
+#include "PTAM/MapMaker.hpp"
+#include "PTAM/MapViewer.hpp"
+#include "PTAM/ARDriver.hpp"
+#include "PTAM/ATANCamera.hpp"
 
 using namespace CVD;
 using namespace std;
@@ -63,7 +66,7 @@ System::System() : mGLWindow(mVideoSource.Size(), "PTAM") {
   GUI.ParseLine("Menu.AddMenuToggle Root \"Draw AR\" DrawAR Root");
 
   mbDone = false;
-};
+}
 
 void System::Run() {
   while (!mbDone) {

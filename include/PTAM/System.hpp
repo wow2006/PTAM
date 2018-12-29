@@ -16,6 +16,8 @@
 #include <cvd/image.h>
 #include <cvd/rgb.h>
 
+namespace PTAM {
+
 class ATANCamera;
 class Map;
 class MapMaker;
@@ -23,7 +25,6 @@ class Tracker;
 class ARDriver;
 class MapViewer;
 
-namespace PTAM {
 /**
  * @brief
  */
