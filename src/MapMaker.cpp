@@ -3,12 +3,9 @@
 #include <fstream>
 #include <iostream>
 
-#ifdef WIN32
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-#else
-#include <pthread.h>
-#endif
+#include <TooN/SVD.h>
+//#include <TooN/SymEigen.h>
+
 
 #include <gvars3/instances.h>
 
@@ -24,19 +21,19 @@
 //#include <cvd/vector_image_ref.h>
 //#include <cvd/vision.h>
 
-//#include <TooN/SVD.h>
-//#include <TooN/SymEigen.h>
-
 // using namespace CVD;
 using namespace std;
 using namespace GVars3;
 
 inline void setThreadPriority(std::thread &thread) {
 #ifdef WIN32
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
   // For some reason, I get tracker thread starvation on Win32 when
   // adding key-frames. Perhaps this will help:
   SetThreadPriority(thread.native_handle(), THREAD_PRIORITY_LOWEST);
 #else
+#include <pthread.h>
   int policy = SCHED_RR;
   sched_param param;
   param.sched_priority = 2;
@@ -51,8 +48,7 @@ namespace PTAM {
 MapMaker::MapMaker(Map &m, const ATANCamera &cam)
     : mMap(m), mCamera(cam), mbResetRequested{false} {
   // This CVD::thread func starts the map-maker thread with function run()
-  // Reset();
-  // start();
+  Reset();
 
   mThread = std::thread([](MapMaker *that) { that->run(); }, this);
   setThreadPriority(mThread);
@@ -62,21 +58,22 @@ MapMaker::MapMaker(Map &m, const ATANCamera &cam)
                 SILENT); // Default to 10cm between keyframes
 }
 
-// void MapMaker::Reset() {
-//  // This is only called from within the mapmaker thread...
-//  mMap.Reset();
-//  mvFailureQueue.clear();
-//  while (!mqNewQueue.empty())
-//    mqNewQueue.pop();
-//  mMap.vpKeyFrames.clear(); // TODO: actually erase old keyframes
-//  mvpKeyFrameQueue.clear(); // TODO: actually erase old keyframes
-//  mbBundleRunning = false;
-//  mbBundleConverged_Full = true;
-//  mbBundleConverged_Recent = true;
-//  mbResetDone = true;
-//  mbResetRequested = false;
-//  mbBundleAbortRequested = false;
-//}
+void MapMaker::Reset() {
+  // This is only called from within the mapmaker thread...
+  mMap.Reset();
+  mvFailureQueue.clear();
+  while (!mqNewQueue.empty()) {
+    mqNewQueue.pop();
+  }
+  mMap.vpKeyFrames.clear(); // TODO: actually erase old keyframes
+  mvpKeyFrameQueue.clear(); // TODO: actually erase old keyframes
+  mbBundleRunning = false;
+  mbBundleConverged_Full = true;
+  mbBundleConverged_Recent = true;
+  mbResetDone = true;
+  mbResetRequested = false;
+  mbBundleAbortRequested = false;
+}
 
 // CHECK_RESET is a handy macro which makes the mapmaker thread stop
 // what it's doing and reset, if required.
@@ -146,12 +143,12 @@ void MapMaker::run() {
 }
 
 // Tracker calls this to demand a reset
-// void MapMaker::RequestReset() {
-//  mbResetDone = false;
-//  mbResetRequested = true;
-//}
+void MapMaker::RequestReset() {
+  mbResetDone = false;
+  mbResetRequested = true;
+}
 
-// bool MapMaker::ResetDone() { return mbResetDone; }
+bool MapMaker::ResetDone() const { return mbResetDone; }
 
 // HandleBadPoints() Does some heuristic checks on all points in the map to see
 // if they should be flagged as bad, based on tracker feedback.
@@ -182,36 +179,37 @@ void MapMaker::run() {
 MapMaker::~MapMaker() {
   mbBundleAbortRequested = true;
   // stop(); // makes shouldStop() return true
-  cout << "Waiting for mapmaker to die.." << endl;
+  std::cout << "Waiting for mapmaker to die..\n";
   this->mThread.join();
-  cout << " .. mapmaker has died." << endl;
+  std::cout << " .. mapmaker has died.\n";
 }
 
 // Finds 3d coords of point in reference frame B from two z=1 plane projections
-// Vector<3> MapMaker::ReprojectPoint(SE3<> se3AfromB, const Vector<2> &v2A,
-//                                   const Vector<2> &v2B) {
-//  Matrix<3, 4> PDash;
-//  PDash.slice<0, 0, 3, 3>() = se3AfromB.get_rotation().get_matrix();
-//  PDash.slice<0, 3, 3, 1>() = se3AfromB.get_translation().as_col();
-//
-//  Matrix<4> A;
-//  A[0][0] = -1.0;
-//  A[0][1] = 0.0;
-//  A[0][2] = v2B[0];
-//  A[0][3] = 0.0;
-//  A[1][0] = 0.0;
-//  A[1][1] = -1.0;
-//  A[1][2] = v2B[1];
-//  A[1][3] = 0.0;
-//  A[2] = v2A[0] * PDash[2] - PDash[0];
-//  A[3] = v2A[1] * PDash[2] - PDash[1];
-//
-//  SVD<4, 4> svd(A);
-//  Vector<4> v4Smallest = svd.get_VT()[3];
-//  if (v4Smallest[3] == 0.0)
-//    v4Smallest[3] = 0.00001;
-//  return project(v4Smallest);
-//}
+Vector<3> MapMaker::ReprojectPoint(SE3<> se3AfromB, const Vector<2> &v2A,
+                                   const Vector<2> &v2B) {
+  Matrix<3, 4> PDash;
+  PDash.slice<0, 0, 3, 3>() = se3AfromB.get_rotation().get_matrix();
+  PDash.slice<0, 3, 3, 1>() = se3AfromB.get_translation().as_col();
+
+  Matrix<4> A;
+  A[0][0] = -1.0;
+  A[0][1] = 0.0;
+  A[0][2] = v2B[0];
+  A[0][3] = 0.0;
+  A[1][0] = 0.0;
+  A[1][1] = -1.0;
+  A[1][2] = v2B[1];
+  A[1][3] = 0.0;
+  A[2] = v2A[0] * PDash[2] - PDash[0];
+  A[3] = v2A[1] * PDash[2] - PDash[1];
+
+  SVD<4, 4> svd(A);
+  Vector<4> v4Smallest = svd.get_VT()[3];
+  if (v4Smallest[3] == 0.0) {
+    v4Smallest[3] = 0.00001;
+  }
+  return project(v4Smallest);
+}
 //
 //// InitFromStereo() generates the initial match from two keyframes
 //// and a vector of image correspondences. Uses the

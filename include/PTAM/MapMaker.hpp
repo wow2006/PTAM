@@ -93,7 +93,7 @@ public:
    *
    * @return
    */
-  bool ResetDone();
+  bool ResetDone() const;
 
   /**
    * @brief How many KFs in the queue waiting to be added?
