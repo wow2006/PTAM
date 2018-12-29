@@ -1,46 +1,63 @@
-// -*- c++ -*- 
+// -*- c++ -*-
 // Copyright 2008 Isis Innovation Limited
 //
 // SmallBlurryImage-based relocaliser
-// 
+//
 // Each KF stores a small, blurred version of itself;
 // Just compare a small, blurred version of the input frame to all the KFs,
 // choose the closest match, and then estimate a camera rotation by direct image
 // minimisation.
+#pragma once
 
-#ifndef __RELOCALISER_H
-#define __RELOCALISER_H
 #include <TooN/se2.h>
-#include "ATANCamera.h"
-#include "SmallBlurryImage.h"
 
-#include "Map.h"
+#include "PTAM/ATANCamera.hpp"
+#include "PTAM/SmallBlurryImage.hpp"
 
+#include "PTAM/Map.hpp"
 
-class Relocaliser
-{
+namespace PTAM {
+
+class Relocaliser {
 public:
+  /** 
+  * @brief 
+  * 
+  * @param map
+  * @param camera
+  */
   Relocaliser(Map &map, ATANCamera &camera);
+
+  /** 
+  * @brief 
+  * 
+  * @param k
+  * 
+  * @return 
+  */
   bool AttemptRecovery(KeyFrame &k);
+
+  /** 
+  * @brief 
+  * 
+  * @return 
+  */
   SE3<> BestPose();
-  
+
 protected:
+  /** 
+  * @brief 
+  * 
+  * @param kCurrentF
+  */
   void ScoreKFs(KeyFrame &kCurrentF);
+
   Map &mMap;
   ATANCamera mCamera;
   int mnBest;
   double mdBestScore;
   SE2<> mse2;
   SE3<> mse3Best;
-
 };
-#endif
 
-
-
-
-
-
-
-
-
+} // namespace PTAM
