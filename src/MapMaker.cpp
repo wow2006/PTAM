@@ -1000,18 +1000,18 @@ void MapMaker::BundleAdjust(set<KeyFrame *> sAdjustSet,
 
 // A general data-association update for a single keyframe
 // Do this on a new key-frame when it's passed in by the tracker
-// int MapMaker::ReFindInSingleKeyFrame(KeyFrame &k) {
-//  vector<MapPoint *> vToFind;
-//  for (unsigned int i = 0; i < mMap.vpPoints.size(); i++)
-//    vToFind.push_back(mMap.vpPoints[i]);
-//
-//  int nFoundNow = 0;
-//  for (unsigned int i = 0; i < vToFind.size(); i++)
-//    if (ReFind_Common(k, *vToFind[i]))
-//      nFoundNow++;
-//
-//  return nFoundNow;
-//};
+int MapMaker::ReFindInSingleKeyFrame(KeyFrame &k) {
+  vector<MapPoint *> vToFind;
+  for (unsigned int i = 0; i < mMap.vpPoints.size(); i++)
+    vToFind.push_back(mMap.vpPoints[i]);
+
+  int nFoundNow = 0;
+  for (unsigned int i = 0; i < vToFind.size(); i++)
+    if (ReFind_Common(k, *vToFind[i]))
+      nFoundNow++;
+
+  return nFoundNow;
+}
 
 // When new map points are generated, they're only created from a stereo pair
 // this tries to make additional measurements in other KFs which they might
