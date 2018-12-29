@@ -3,10 +3,12 @@
 #include <fstream>
 
 #include <TooN/wls.h>
+
 #include <cvd/fast_corner.h>
 #include <cvd/gl_helpers.h>
 #include <cvd/utility.h>
 #include <cvd/vision.h>
+
 #include <gvars3/GStringUtil.h>
 #include <gvars3/instances.h>
 
