@@ -727,17 +727,17 @@ KeyFrame *MapMaker::ClosestKeyFrame(KeyFrame &k) {
 //  double dDist = KeyFrameLinearDist(kCurrent, *pClosest);
 //  return dDist;
 //}
-//
-// bool MapMaker::NeedNewKeyFrame(KeyFrame &kCurrent) {
-//  KeyFrame *pClosest = ClosestKeyFrame(kCurrent);
-//  double dDist = KeyFrameLinearDist(kCurrent, *pClosest);
-//  dDist *= (1.0 / kCurrent.dSceneDepthMean);
-//
-//  if (dDist > GV2.GetDouble("MapMaker.MaxKFDistWiggleMult", 1.0, SILENT) *
-//                  mdWiggleScaleDepthNormalized)
-//    return true;
-//  return false;
-//}
+
+bool MapMaker::NeedNewKeyFrame(KeyFrame &kCurrent) {
+  KeyFrame *pClosest = ClosestKeyFrame(kCurrent);
+  double dDist = KeyFrameLinearDist(kCurrent, *pClosest);
+  dDist *= (1.0 / kCurrent.dSceneDepthMean);
+
+  if (dDist > GV2.GetDouble("MapMaker.MaxKFDistWiggleMult", 1.0, SILENT) *
+                  mdWiggleScaleDepthNormalized)
+    return true;
+  return false;
+}
 
 // Perform bundle adjustment on all keyframes, all map points
 void MapMaker::BundleAdjustAll() {
