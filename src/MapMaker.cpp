@@ -6,22 +6,23 @@
 #include <TooN/SVD.h>
 //#include <TooN/SymEigen.h>
 
+#include <cvd/vector_image_ref.h>
+
 #include <gvars3/instances.h>
 
+#include "PTAM/KeyFrame.hpp"
 #include "PTAM/MapMaker.hpp"
 #include "PTAM/MapPoint.hpp"
-#include "PTAM/KeyFrame.hpp"
+#include "PTAM/PatchFinder.hpp"
+#include "PTAM/HomographyInit.hpp"
 
 //#include "Bundle.h"
-//#include "HomographyInit.h"
-//#include "PatchFinder.h"
 //#include "SmallMatrixOpts.h"
 
 //#include <cvd/image_interpolate.h>
-//#include <cvd/vector_image_ref.h>
 //#include <cvd/vision.h>
 
-// using namespace CVD;
+using namespace CVD;
 using namespace std;
 using namespace GVars3;
 
@@ -154,7 +155,7 @@ bool MapMaker::ResetDone() const { return mbResetDone; }
 // if they should be flagged as bad, based on tracker feedback.
 void MapMaker::HandleBadPoints() {
   // Did the tracker see this point as an outlier more often than as an
-  //inlier ? 
+  // inlier ?
   for (unsigned int i = 0; i < mMap.vpPoints.size(); i++) {
     MapPoint &p = *mMap.vpPoints[i];
     if (p.nMEstimatorOutlierCount > 20 &&
@@ -213,155 +214,155 @@ Vector<3> MapMaker::ReprojectPoint(SE3<> se3AfromB, const Vector<2> &v2A,
   }
   return project(v4Smallest);
 }
-//
-//// InitFromStereo() generates the initial match from two keyframes
-//// and a vector of image correspondences. Uses the
-// bool MapMaker::InitFromStereo(KeyFrame &kF, KeyFrame &kS,
-//                              vector<pair<ImageRef, ImageRef>> &vTrailMatches,
-//                              SE3<> &se3TrackerPose) {
-//  mdWiggleScale = *mgvdWiggleScale; // Cache this for the new map.
-//
-//  mCamera.SetImageSize(kF.aLevels[0].im.size());
-//
-//  vector<HomographyMatch> vMatches;
-//  for (unsigned int i = 0; i < vTrailMatches.size(); i++) {
-//    HomographyMatch m;
-//    m.v2CamPlaneFirst = mCamera.UnProject(vTrailMatches[i].first);
-//    m.v2CamPlaneSecond = mCamera.UnProject(vTrailMatches[i].second);
-//    m.m2PixelProjectionJac = mCamera.GetProjectionDerivs();
-//    vMatches.push_back(m);
-//  }
-//
-//  SE3<> se3;
-//  bool bGood;
-//  HomographyInit HomographyInit;
-//  bGood = HomographyInit.Compute(vMatches, 5.0, se3);
-//  if (!bGood) {
-//    cout << "  Could not init from stereo pair, try again." << endl;
-//    return false;
-//  }
-//
-//  // Check that the initialiser estimated a non-zero baseline
-//  double dTransMagn = sqrt(se3.get_translation() * se3.get_translation());
-//  if (dTransMagn == 0) {
-//    cout << "  Estimated zero baseline from stereo pair, try again." << endl;
-//    return false;
-//  }
-//  // change the scale of the map so the second camera is wiggleScale away from
-//  // the first
-//  se3.get_translation() *= mdWiggleScale / dTransMagn;
-//
-//  KeyFrame *pkFirst = new KeyFrame();
-//  KeyFrame *pkSecond = new KeyFrame();
-//  *pkFirst = kF;
-//  *pkSecond = kS;
-//
-//  pkFirst->bFixed = true;
-//  pkFirst->se3CfromW = SE3<>();
-//
-//  pkSecond->bFixed = false;
-//  pkSecond->se3CfromW = se3;
-//
-//  // Construct map from the stereo matches.
-//  PatchFinder finder;
-//
-//  for (unsigned int i = 0; i < vMatches.size(); i++) {
-//    MapPoint *p = new MapPoint();
-//
-//    // Patch source stuff:
-//    p->pPatchSourceKF = pkFirst;
-//    p->nSourceLevel = 0;
-//    p->v3Normal_NC = makeVector(0, 0, -1);
-//    p->irCenter = vTrailMatches[i].first;
-//    p->v3Center_NC = unproject(mCamera.UnProject(p->irCenter));
-//    p->v3OneDownFromCenter_NC =
-//        unproject(mCamera.UnProject(p->irCenter + ImageRef(0, 1)));
-//    p->v3OneRightFromCenter_NC =
-//        unproject(mCamera.UnProject(p->irCenter + ImageRef(1, 0)));
-//    normalize(p->v3Center_NC);
-//    normalize(p->v3OneDownFromCenter_NC);
-//    normalize(p->v3OneRightFromCenter_NC);
-//    p->RefreshPixelVectors();
-//
-//    // Do sub-pixel alignment on the second image
-//    finder.MakeTemplateCoarseNoWarp(*p);
-//    finder.MakeSubPixTemplate();
-//    finder.SetSubPixPos(vec(vTrailMatches[i].second));
-//    bool bGood = finder.IterateSubPixToConvergence(*pkSecond, 10);
-//    if (!bGood) {
-//      delete p;
-//      continue;
-//    }
-//
-//    // Triangulate point:
-//    Vector<2> v2SecondPos = finder.GetSubPixPos();
-//    p->v3WorldPos = ReprojectPoint(se3, mCamera.UnProject(v2SecondPos),
-//                                   vMatches[i].v2CamPlaneFirst);
-//    if (p->v3WorldPos[2] < 0.0) {
-//      delete p;
-//      continue;
-//    }
-//
-//    // Not behind map? Good, then add to map.
-//    p->pMMData = new MapMakerData();
-//    mMap.vpPoints.push_back(p);
-//
-//    // Construct first two measurements and insert into relevant DBs:
-//    Measurement mFirst;
-//    mFirst.nLevel = 0;
-//    mFirst.Source = Measurement::SRC_ROOT;
-//    mFirst.v2RootPos = vec(vTrailMatches[i].first);
-//    mFirst.bSubPix = true;
-//    pkFirst->mMeasurements[p] = mFirst;
-//    p->pMMData->sMeasurementKFs.insert(pkFirst);
-//
-//    Measurement mSecond;
-//    mSecond.nLevel = 0;
-//    mSecond.Source = Measurement::SRC_TRAIL;
-//    mSecond.v2RootPos = finder.GetSubPixPos();
-//    mSecond.bSubPix = true;
-//    pkSecond->mMeasurements[p] = mSecond;
-//    p->pMMData->sMeasurementKFs.insert(pkSecond);
-//  }
-//
-//  mMap.vpKeyFrames.push_back(pkFirst);
-//  mMap.vpKeyFrames.push_back(pkSecond);
-//  pkFirst->MakeKeyFrame_Rest();
-//  pkSecond->MakeKeyFrame_Rest();
-//
-//  for (int i = 0; i < 5; i++)
-//    BundleAdjustAll();
-//
-//  // Estimate the feature depth distribution in the first two key-frames
-//  // (Needed for epipolar search)
-//  RefreshSceneDepth(pkFirst);
-//  RefreshSceneDepth(pkSecond);
-//  mdWiggleScaleDepthNormalized = mdWiggleScale / pkFirst->dSceneDepthMean;
-//
-//  AddSomeMapPoints(0);
-//  AddSomeMapPoints(3);
-//  AddSomeMapPoints(1);
-//  AddSomeMapPoints(2);
-//
-//  mbBundleConverged_Full = false;
-//  mbBundleConverged_Recent = false;
-//
-//  while (!mbBundleConverged_Full) {
-//    BundleAdjustAll();
-//    if (mbResetRequested)
-//      return false;
-//  }
-//
-//  // Rotate and translate the map so the dominant plane is at z=0:
-//  ApplyGlobalTransformationToMap(CalcPlaneAligner());
-//  mMap.bGood = true;
-//  se3TrackerPose = pkSecond->se3CfromW;
-//
-//  cout << "  MapMaker: made initial map with " << mMap.vpPoints.size()
-//       << " points." << endl;
-//  return true;
-//}
-//
+
+// InitFromStereo() generates the initial match from two keyframes
+// and a vector of image correspondences. Uses the
+bool MapMaker::InitFromStereo(KeyFrame &kF, KeyFrame &kS,
+                              vector<pair<ImageRef, ImageRef>> &vTrailMatches,
+                              SE3<> &se3TrackerPose) {
+  mdWiggleScale = *mgvdWiggleScale; // Cache this for the new map.
+
+  mCamera.SetImageSize(kF.aLevels[0].im.size());
+
+  vector<HomographyMatch> vMatches;
+  for (unsigned int i = 0; i < vTrailMatches.size(); i++) {
+    HomographyMatch m;
+    m.v2CamPlaneFirst = mCamera.UnProject(vTrailMatches[i].first);
+    m.v2CamPlaneSecond = mCamera.UnProject(vTrailMatches[i].second);
+    m.m2PixelProjectionJac = mCamera.GetProjectionDerivs();
+    vMatches.push_back(m);
+  }
+
+  SE3<> se3;
+  bool bGood;
+  HomographyInit HomographyInit;
+  bGood = HomographyInit.Compute(vMatches, 5.0, se3);
+  if (!bGood) {
+    cout << "  Could not init from stereo pair, try again." << endl;
+    return false;
+  }
+
+  // Check that the initialiser estimated a non-zero baseline
+  double dTransMagn = sqrt(se3.get_translation() * se3.get_translation());
+  if (dTransMagn == 0) {
+    cout << "  Estimated zero baseline from stereo pair, try again." << endl;
+    return false;
+  }
+  // change the scale of the map so the second camera is wiggleScale away from
+  // the first
+  se3.get_translation() *= mdWiggleScale / dTransMagn;
+
+  KeyFrame *pkFirst = new KeyFrame();
+  KeyFrame *pkSecond = new KeyFrame();
+  *pkFirst = kF;
+  *pkSecond = kS;
+
+  pkFirst->bFixed = true;
+  pkFirst->se3CfromW = SE3<>();
+
+  pkSecond->bFixed = false;
+  pkSecond->se3CfromW = se3;
+
+  // Construct map from the stereo matches.
+  PatchFinder finder;
+
+  for (unsigned int i = 0; i < vMatches.size(); i++) {
+    MapPoint *p = new MapPoint();
+
+    // Patch source stuff:
+    p->pPatchSourceKF = pkFirst;
+    p->nSourceLevel = 0;
+    p->v3Normal_NC = makeVector(0, 0, -1);
+    p->irCenter = vTrailMatches[i].first;
+    p->v3Center_NC = unproject(mCamera.UnProject(p->irCenter));
+    p->v3OneDownFromCenter_NC =
+        unproject(mCamera.UnProject(p->irCenter + ImageRef(0, 1)));
+    p->v3OneRightFromCenter_NC =
+        unproject(mCamera.UnProject(p->irCenter + ImageRef(1, 0)));
+    normalize(p->v3Center_NC);
+    normalize(p->v3OneDownFromCenter_NC);
+    normalize(p->v3OneRightFromCenter_NC);
+    p->RefreshPixelVectors();
+
+    // Do sub-pixel alignment on the second image
+    finder.MakeTemplateCoarseNoWarp(*p);
+    finder.MakeSubPixTemplate();
+    finder.SetSubPixPos(vec(vTrailMatches[i].second));
+    bool bGood = finder.IterateSubPixToConvergence(*pkSecond, 10);
+    if (!bGood) {
+      delete p;
+      continue;
+    }
+
+    // Triangulate point:
+    Vector<2> v2SecondPos = finder.GetSubPixPos();
+    p->v3WorldPos = ReprojectPoint(se3, mCamera.UnProject(v2SecondPos),
+                                   vMatches[i].v2CamPlaneFirst);
+    if (p->v3WorldPos[2] < 0.0) {
+      delete p;
+      continue;
+    }
+
+    // Not behind map? Good, then add to map.
+    p->pMMData = new MapMakerData();
+    mMap.vpPoints.push_back(p);
+
+    // Construct first two measurements and insert into relevant DBs:
+    Measurement mFirst;
+    mFirst.nLevel = 0;
+    mFirst.Source = Measurement::SRC_ROOT;
+    mFirst.v2RootPos = vec(vTrailMatches[i].first);
+    mFirst.bSubPix = true;
+    pkFirst->mMeasurements[p] = mFirst;
+    p->pMMData->sMeasurementKFs.insert(pkFirst);
+
+    Measurement mSecond;
+    mSecond.nLevel = 0;
+    mSecond.Source = Measurement::SRC_TRAIL;
+    mSecond.v2RootPos = finder.GetSubPixPos();
+    mSecond.bSubPix = true;
+    pkSecond->mMeasurements[p] = mSecond;
+    p->pMMData->sMeasurementKFs.insert(pkSecond);
+  }
+
+  mMap.vpKeyFrames.push_back(pkFirst);
+  mMap.vpKeyFrames.push_back(pkSecond);
+  pkFirst->MakeKeyFrame_Rest();
+  pkSecond->MakeKeyFrame_Rest();
+
+  for (int i = 0; i < 5; i++)
+    BundleAdjustAll();
+
+  // Estimate the feature depth distribution in the first two key-frames
+  // (Needed for epipolar search)
+  RefreshSceneDepth(pkFirst);
+  RefreshSceneDepth(pkSecond);
+  mdWiggleScaleDepthNormalized = mdWiggleScale / pkFirst->dSceneDepthMean;
+
+  AddSomeMapPoints(0);
+  AddSomeMapPoints(3);
+  AddSomeMapPoints(1);
+  AddSomeMapPoints(2);
+
+  mbBundleConverged_Full = false;
+  mbBundleConverged_Recent = false;
+
+  while (!mbBundleConverged_Full) {
+    BundleAdjustAll();
+    if (mbResetRequested)
+      return false;
+  }
+
+  // Rotate and translate the map so the dominant plane is at z=0:
+  ApplyGlobalTransformationToMap(CalcPlaneAligner());
+  mMap.bGood = true;
+  se3TrackerPose = pkSecond->se3CfromW;
+
+  cout << "  MapMaker: made initial map with " << mMap.vpPoints.size()
+       << " points." << endl;
+  return true;
+}
+
 //// ThinCandidates() Thins out a key-frame's candidate list.
 //// Candidates are those salient corners where the mapmaker will attempt
 //// to make a new map point by epipolar search. We don't want to make new
