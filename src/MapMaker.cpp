@@ -669,14 +669,14 @@ bool MapMaker::AddPointEpipolar(KeyFrame &kSrc, KeyFrame &kTarget, int nLevel,
   pNew->pMMData->sMeasurementKFs.insert(&kTarget);
   return true;
 }
-//
-// double MapMaker::KeyFrameLinearDist(KeyFrame &k1, KeyFrame &k2) {
-//  Vector<3> v3KF1_CamPos = k1.se3CfromW.inverse().get_translation();
-//  Vector<3> v3KF2_CamPos = k2.se3CfromW.inverse().get_translation();
-//  Vector<3> v3Diff = v3KF2_CamPos - v3KF1_CamPos;
-//  double dDist = sqrt(v3Diff * v3Diff);
-//  return dDist;
-//}
+
+double MapMaker::KeyFrameLinearDist(KeyFrame &k1, KeyFrame &k2) {
+  Vector<3> v3KF1_CamPos = k1.se3CfromW.inverse().get_translation();
+  Vector<3> v3KF2_CamPos = k2.se3CfromW.inverse().get_translation();
+  Vector<3> v3Diff = v3KF2_CamPos - v3KF1_CamPos;
+  double dDist = sqrt(v3Diff * v3Diff);
+  return dDist;
+}
 
 vector<KeyFrame *> MapMaker::NClosestKeyFrames(KeyFrame &k, unsigned int N) {
   vector<pair<double, KeyFrame *>> vKFandScores;
