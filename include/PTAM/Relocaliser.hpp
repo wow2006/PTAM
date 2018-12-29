@@ -12,7 +12,6 @@
 #include <TooN/se2.h>
 
 #include "PTAM/ATANCamera.hpp"
-#include "PTAM/SmallBlurryImage.hpp"
 
 #include "PTAM/Map.hpp"
 
