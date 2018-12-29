@@ -10,11 +10,11 @@
 
 #include <gvars3/instances.h>
 
+#include "PTAM/HomographyInit.hpp"
 #include "PTAM/KeyFrame.hpp"
 #include "PTAM/MapMaker.hpp"
 #include "PTAM/MapPoint.hpp"
 #include "PTAM/PatchFinder.hpp"
-#include "PTAM/HomographyInit.hpp"
 
 //#include "Bundle.h"
 //#include "SmallMatrixOpts.h"
@@ -414,20 +414,21 @@ bool MapMaker::InitFromStereo(KeyFrame &kF, KeyFrame &kS,
 //  for (unsigned int i = 0; i < l.vCandidates.size(); i++)
 //    AddPointEpipolar(kSrc, kTarget, nLevel, i);
 //};
-//
-//// Rotates/translates the whole map and all keyframes
-// void MapMaker::ApplyGlobalTransformationToMap(SE3<> se3NewFromOld) {
-//  for (unsigned int i = 0; i < mMap.vpKeyFrames.size(); i++)
-//    mMap.vpKeyFrames[i]->se3CfromW =
-//        mMap.vpKeyFrames[i]->se3CfromW * se3NewFromOld.inverse();
-//
-//  SO3<> so3Rot = se3NewFromOld.get_rotation();
-//  for (unsigned int i = 0; i < mMap.vpPoints.size(); i++) {
-//    mMap.vpPoints[i]->v3WorldPos = se3NewFromOld *
-//    mMap.vpPoints[i]->v3WorldPos; mMap.vpPoints[i]->RefreshPixelVectors();
-//  }
-//}
-//
+
+// Rotates/translates the whole map and all keyframes
+void MapMaker::ApplyGlobalTransformationToMap(SE3<> se3NewFromOld) {
+  for (unsigned int i = 0; i < mMap.vpKeyFrames.size(); i++) {
+    mMap.vpKeyFrames[i]->se3CfromW =
+        mMap.vpKeyFrames[i]->se3CfromW * se3NewFromOld.inverse();
+  }
+
+  SO3<> so3Rot = se3NewFromOld.get_rotation();
+  for (unsigned int i = 0; i < mMap.vpPoints.size(); i++) {
+    mMap.vpPoints[i]->v3WorldPos = se3NewFromOld * mMap.vpPoints[i]->v3WorldPos;
+    mMap.vpPoints[i]->RefreshPixelVectors();
+  }
+}
+
 //// Applies a global scale factor to the map
 // void MapMaker::ApplyGlobalScaleToMap(double dScale) {
 //  for (unsigned int i = 0; i < mMap.vpKeyFrames.size(); i++)
