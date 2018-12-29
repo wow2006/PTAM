@@ -363,57 +363,58 @@ bool MapMaker::InitFromStereo(KeyFrame &kF, KeyFrame &kS,
   return true;
 }
 
-//// ThinCandidates() Thins out a key-frame's candidate list.
-//// Candidates are those salient corners where the mapmaker will attempt
-//// to make a new map point by epipolar search. We don't want to make new
-/// points / where there are already existing map points, this routine erases
-/// such / candidates. Operates on a single level of a keyframe.
-// void MapMaker::ThinCandidates(KeyFrame &k, int nLevel) {
-//  vector<Candidate> &vCSrc = k.aLevels[nLevel].vCandidates;
-//  vector<Candidate> vCGood;
-//  vector<ImageRef> irBusyLevelPos;
-//  // Make a list of `busy' image locations, which already have features at the
-//  // same level or at one level higher.
-//  for (meas_it it = k.mMeasurements.begin(); it != k.mMeasurements.end();
-//       it++) {
-//    if (!(it->second.nLevel == nLevel || it->second.nLevel == nLevel + 1))
-//      continue;
-//    irBusyLevelPos.push_back(
-//        ir_rounded(it->second.v2RootPos / LevelScale(nLevel)));
-//  }
-//
-//  // Only keep those candidates further than 10 pixels away from busy
-//  positions. unsigned int nMinMagSquared = 10 * 10; for (unsigned int i = 0; i
-//  < vCSrc.size(); i++) {
-//    ImageRef irC = vCSrc[i].irLevelPos;
-//    bool bGood = true;
-//    for (unsigned int j = 0; j < irBusyLevelPos.size(); j++) {
-//      ImageRef irB = irBusyLevelPos[j];
-//      if ((irB - irC).mag_squared() < nMinMagSquared) {
-//        bGood = false;
-//        break;
-//      }
-//    }
-//    if (bGood)
-//      vCGood.push_back(vCSrc[i]);
-//  }
-//  vCSrc = vCGood;
-//}
-//
-//// Adds map points by epipolar search to the last-added key-frame, at a single
-//// specified pyramid level. Does epipolar search in the target keyframe as
-//// closest by the ClosestKeyFrame function.
-// void MapMaker::AddSomeMapPoints(int nLevel) {
-//  KeyFrame &kSrc =
-//      *(mMap.vpKeyFrames[mMap.vpKeyFrames.size() - 1]); // The new keyframe
-//  KeyFrame &kTarget = *(ClosestKeyFrame(kSrc));
-//  Level &l = kSrc.aLevels[nLevel];
-//
-//  ThinCandidates(kSrc, nLevel);
-//
-//  for (unsigned int i = 0; i < l.vCandidates.size(); i++)
-//    AddPointEpipolar(kSrc, kTarget, nLevel, i);
-//};
+// ThinCandidates() Thins out a key-frame's candidate list.
+// Candidates are those salient corners where the mapmaker will attempt
+// to make a new map point by epipolar search. We don't want to make new
+// points / where there are already existing map points, this routine erases
+// such / candidates. Operates on a single level of a keyframe.
+void MapMaker::ThinCandidates(KeyFrame &k, int nLevel) {
+  vector<Candidate> &vCSrc = k.aLevels[nLevel].vCandidates;
+  vector<Candidate> vCGood;
+  vector<ImageRef> irBusyLevelPos;
+  // Make a list of `busy' image locations, which already have features at the
+  // same level or at one level higher.
+  for (meas_it it = k.mMeasurements.begin(); it != k.mMeasurements.end(); it++) {
+    if (!(it->second.nLevel == nLevel || it->second.nLevel == nLevel + 1)) {
+      continue;
+    }
+
+    irBusyLevelPos.push_back(ir_rounded(it->second.v2RootPos / LevelScale(nLevel)));
+  }
+
+  // Only keep those candidates further than 10 pixels away from busy positions.
+  unsigned int nMinMagSquared = 10 * 10;
+  for (unsigned int i = 0; i < vCSrc.size(); i++) {
+    ImageRef irC = vCSrc[i].irLevelPos;
+    bool bGood = true;
+    for (unsigned int j = 0; j < irBusyLevelPos.size(); j++) {
+      ImageRef irB = irBusyLevelPos[j];
+      if ((irB - irC).mag_squared() < nMinMagSquared) {
+        bGood = false;
+        break;
+      }
+    }
+    if (bGood)
+      vCGood.push_back(vCSrc[i]);
+  }
+  vCSrc = vCGood;
+}
+
+// Adds map points by epipolar search to the last-added key-frame, at a single
+// specified pyramid level. Does epipolar search in the target keyframe as
+// closest by the ClosestKeyFrame function.
+void MapMaker::AddSomeMapPoints(int nLevel) {
+  KeyFrame &kSrc =
+      *(mMap.vpKeyFrames[mMap.vpKeyFrames.size() - 1]); // The new keyframe
+  KeyFrame &kTarget = *(ClosestKeyFrame(kSrc));
+  Level &l = kSrc.aLevels[nLevel];
+
+  ThinCandidates(kSrc, nLevel);
+
+  for (unsigned int i = 0; i < l.vCandidates.size(); i++) {
+    AddPointEpipolar(kSrc, kTarget, nLevel, i);
+  }
+}
 
 // Rotates/translates the whole map and all keyframes
 void MapMaker::ApplyGlobalTransformationToMap(SE3<> se3NewFromOld) {
