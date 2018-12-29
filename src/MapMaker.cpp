@@ -489,184 +489,186 @@ void MapMaker::ApplyGlobalTransformationToMap(SE3<> se3NewFromOld) {
 //  mbBundleConverged_Full = false;
 //  mbBundleConverged_Recent = false;
 //}
-//
-//// Tries to make a new map point out of a single candidate point
-//// by searching for that point in another keyframe, and triangulating
-//// if a match is found.
-// bool MapMaker::AddPointEpipolar(KeyFrame &kSrc, KeyFrame &kTarget, int
-// nLevel,
-//                                int nCandidate) {
-//  static Image<Vector<2>> imUnProj;
-//  static bool bMadeCache = false;
-//  if (!bMadeCache) {
-//    imUnProj.resize(kSrc.aLevels[0].im.size());
-//    ImageRef ir;
-//    do
-//      imUnProj[ir] = mCamera.UnProject(ir);
-//    while (ir.next(imUnProj.size()));
-//    bMadeCache = true;
-//  }
-//
-//  int nLevelScale = LevelScale(nLevel);
-//  Candidate &candidate = kSrc.aLevels[nLevel].vCandidates[nCandidate];
-//  ImageRef irLevelPos = candidate.irLevelPos;
-//  Vector<2> v2RootPos = LevelZeroPos(irLevelPos, nLevel);
-//
-//  Vector<3> v3Ray_SC = unproject(mCamera.UnProject(v2RootPos));
-//  normalize(v3Ray_SC);
-//  Vector<3> v3LineDirn_TC =
-//      kTarget.se3CfromW.get_rotation() *
-//      (kSrc.se3CfromW.get_rotation().inverse() * v3Ray_SC);
-//
-//  // Restrict epipolar search to a relatively narrow depth range
-//  // to increase reliability
-//  double dMean = kSrc.dSceneDepthMean;
-//  double dSigma = kSrc.dSceneDepthSigma;
-//  double dStartDepth = max(mdWiggleScale, dMean - dSigma);
-//  double dEndDepth = min(40 * mdWiggleScale, dMean + dSigma);
-//
-//  Vector<3> v3CamCenter_TC =
-//      kTarget.se3CfromW *
-//      kSrc.se3CfromW.inverse().get_translation(); // The camera end
-//  Vector<3> v3RayStart_TC =
-//      v3CamCenter_TC + dStartDepth * v3LineDirn_TC; // the far-away end
-//  Vector<3> v3RayEnd_TC =
-//      v3CamCenter_TC + dEndDepth * v3LineDirn_TC; // the far-away end
-//
-//  if (v3RayEnd_TC[2] <=
-//      v3RayStart_TC[2]) // it's highly unlikely that we'll manage to get
-//                        // anything out if we're facing backwards wrt the
-//                        other
-//                        // camera's view-ray
-//    return false;
-//  if (v3RayEnd_TC[2] <= 0.0)
-//    return false;
-//  if (v3RayStart_TC[2] <= 0.0)
-//    v3RayStart_TC +=
-//        v3LineDirn_TC * (0.001 - v3RayStart_TC[2] / v3LineDirn_TC[2]);
-//
-//  Vector<2> v2A = project(v3RayStart_TC);
-//  Vector<2> v2B = project(v3RayEnd_TC);
-//  Vector<2> v2AlongProjectedLine = v2A - v2B;
-//
-//  if (v2AlongProjectedLine * v2AlongProjectedLine < 0.00000001) {
-//    cout << "v2AlongProjectedLine too small." << endl;
-//    return false;
-//  }
-//  normalize(v2AlongProjectedLine);
-//  Vector<2> v2Normal;
-//  v2Normal[0] = v2AlongProjectedLine[1];
-//  v2Normal[1] = -v2AlongProjectedLine[0];
-//
-//  double dNormDist = v2A * v2Normal;
-//  if (fabs(dNormDist) > mCamera.LargestRadiusInImage())
-//    return false;
-//
-//  double dMinLen =
-//      min(v2AlongProjectedLine * v2A, v2AlongProjectedLine * v2B) - 0.05;
-//  double dMaxLen =
-//      max(v2AlongProjectedLine * v2A, v2AlongProjectedLine * v2B) + 0.05;
-//  if (dMinLen < -2.0)
-//    dMinLen = -2.0;
-//  if (dMaxLen < -2.0)
-//    dMaxLen = -2.0;
-//  if (dMinLen > 2.0)
-//    dMinLen = 2.0;
-//  if (dMaxLen > 2.0)
-//    dMaxLen = 2.0;
-//
-//  // Find current-frame corners which might match this
-//  PatchFinder Finder;
-//  Finder.MakeTemplateCoarseNoWarp(kSrc, nLevel, irLevelPos);
-//  if (Finder.TemplateBad())
-//    return false;
-//
-//  vector<Vector<2>> &vv2Corners = kTarget.aLevels[nLevel].vImplaneCorners;
-//  vector<ImageRef> &vIR = kTarget.aLevels[nLevel].vCorners;
-//  if (!kTarget.aLevels[nLevel].bImplaneCornersCached) {
-//    for (unsigned int i = 0; i < vIR.size();
-//         i++) // over all corners in target img..
-//      vv2Corners.push_back(imUnProj[ir(LevelZeroPos(vIR[i], nLevel))]);
-//    kTarget.aLevels[nLevel].bImplaneCornersCached = true;
-//  }
-//
-//  int nBest = -1;
-//  int nBestZMSSD = Finder.mnMaxSSD + 1;
-//  double dMaxDistDiff = mCamera.OnePixelDist() * (4.0 + 1.0 * nLevelScale);
-//  double dMaxDistSq = dMaxDistDiff * dMaxDistDiff;
-//
-//  for (unsigned int i = 0; i < vv2Corners.size();
-//       i++) // over all corners in target img..
-//  {
-//    Vector<2> v2Im = vv2Corners[i];
-//    double dDistDiff = dNormDist - v2Im * v2Normal;
-//    if (dDistDiff * dDistDiff > dMaxDistSq)
-//      continue; // skip if not along epi line
-//    if (v2Im * v2AlongProjectedLine < dMinLen)
-//      continue; // skip if not far enough along line
-//    if (v2Im * v2AlongProjectedLine > dMaxLen)
-//      continue; // or too far
-//    int nZMSSD = Finder.ZMSSDAtPoint(kTarget.aLevels[nLevel].im, vIR[i]);
-//    if (nZMSSD < nBestZMSSD) {
-//      nBest = i;
-//      nBestZMSSD = nZMSSD;
-//    }
-//  }
-//
-//  if (nBest == -1)
-//    return false; // Nothing found.
-//
-//  //  Found a likely candidate along epipolar ray
-//  Finder.MakeSubPixTemplate();
-//  Finder.SetSubPixPos(LevelZeroPos(vIR[nBest], nLevel));
-//  bool bSubPixConverges = Finder.IterateSubPixToConvergence(kTarget, 10);
-//  if (!bSubPixConverges)
-//    return false;
-//
-//  // Now triangulate the 3d point...
-//  Vector<3> v3New;
-//  v3New = kTarget.se3CfromW.inverse() *
-//          ReprojectPoint(kSrc.se3CfromW * kTarget.se3CfromW.inverse(),
-//                         mCamera.UnProject(v2RootPos),
-//                         mCamera.UnProject(Finder.GetSubPixPos()));
-//
-//  MapPoint *pNew = new MapPoint;
-//  pNew->v3WorldPos = v3New;
-//  pNew->pMMData = new MapMakerData();
-//
-//  // Patch source stuff:
-//  pNew->pPatchSourceKF = &kSrc;
-//  pNew->nSourceLevel = nLevel;
-//  pNew->v3Normal_NC = makeVector(0, 0, -1);
-//  pNew->irCenter = irLevelPos;
-//  pNew->v3Center_NC = unproject(mCamera.UnProject(v2RootPos));
-//  pNew->v3OneRightFromCenter_NC =
-//      unproject(mCamera.UnProject(v2RootPos + vec(ImageRef(nLevelScale, 0))));
-//  pNew->v3OneDownFromCenter_NC =
-//      unproject(mCamera.UnProject(v2RootPos + vec(ImageRef(0, nLevelScale))));
-//
-//  normalize(pNew->v3Center_NC);
-//  normalize(pNew->v3OneDownFromCenter_NC);
-//  normalize(pNew->v3OneRightFromCenter_NC);
-//
-//  pNew->RefreshPixelVectors();
-//
-//  mMap.vpPoints.push_back(pNew);
-//  mqNewQueue.push(pNew);
-//  Measurement m;
-//  m.Source = Measurement::SRC_ROOT;
-//  m.v2RootPos = v2RootPos;
-//  m.nLevel = nLevel;
-//  m.bSubPix = true;
-//  kSrc.mMeasurements[pNew] = m;
-//
-//  m.Source = Measurement::SRC_EPIPOLAR;
-//  m.v2RootPos = Finder.GetSubPixPos();
-//  kTarget.mMeasurements[pNew] = m;
-//  pNew->pMMData->sMeasurementKFs.insert(&kSrc);
-//  pNew->pMMData->sMeasurementKFs.insert(&kTarget);
-//  return true;
-//}
+
+// Tries to make a new map point out of a single candidate point
+// by searching for that point in another keyframe, and triangulating
+// if a match is found.
+bool MapMaker::AddPointEpipolar(KeyFrame &kSrc, KeyFrame &kTarget, int nLevel,
+                                int nCandidate) {
+  static Image<Vector<2>> imUnProj;
+  static bool bMadeCache = false;
+  if (!bMadeCache) {
+    imUnProj.resize(kSrc.aLevels[0].im.size());
+    ImageRef ir;
+    do {
+      imUnProj[ir] = mCamera.UnProject(ir);
+    } while (ir.next(imUnProj.size()));
+    bMadeCache = true;
+  }
+
+  int nLevelScale = LevelScale(nLevel);
+  Candidate &candidate = kSrc.aLevels[nLevel].vCandidates[nCandidate];
+  ImageRef irLevelPos = candidate.irLevelPos;
+  Vector<2> v2RootPos = LevelZeroPos(irLevelPos, nLevel);
+
+  Vector<3> v3Ray_SC = unproject(mCamera.UnProject(v2RootPos));
+  normalize(v3Ray_SC);
+  Vector<3> v3LineDirn_TC =
+      kTarget.se3CfromW.get_rotation() *
+      (kSrc.se3CfromW.get_rotation().inverse() * v3Ray_SC);
+
+  // Restrict epipolar search to a relatively narrow depth range
+  // to increase reliability
+  double dMean = kSrc.dSceneDepthMean;
+  double dSigma = kSrc.dSceneDepthSigma;
+  double dStartDepth = max(mdWiggleScale, dMean - dSigma);
+  double dEndDepth = min(40 * mdWiggleScale, dMean + dSigma);
+
+  Vector<3> v3CamCenter_TC =
+      kTarget.se3CfromW *
+      kSrc.se3CfromW.inverse().get_translation(); // The camera end
+  Vector<3> v3RayStart_TC =
+      v3CamCenter_TC + dStartDepth * v3LineDirn_TC; // the far-away end
+  Vector<3> v3RayEnd_TC =
+      v3CamCenter_TC + dEndDepth * v3LineDirn_TC; // the far-away end
+  // it's highly unlikely that we'll manage to get
+  // anything out if we're facing backwards wrt the other
+  // camera's view-ray
+  if (v3RayEnd_TC[2] <= v3RayStart_TC[2]) {
+    return false;
+  }
+
+  if (v3RayEnd_TC[2] <= 0.0) {
+    return false;
+  }
+
+  if (v3RayStart_TC[2] <= 0.0) {
+    v3RayStart_TC +=
+        v3LineDirn_TC * (0.001 - v3RayStart_TC[2] / v3LineDirn_TC[2]);
+  }
+
+  Vector<2> v2A = project(v3RayStart_TC);
+  Vector<2> v2B = project(v3RayEnd_TC);
+  Vector<2> v2AlongProjectedLine = v2A - v2B;
+
+  if (v2AlongProjectedLine * v2AlongProjectedLine < 0.00000001) {
+    cout << "v2AlongProjectedLine too small." << endl;
+    return false;
+  }
+  normalize(v2AlongProjectedLine);
+  Vector<2> v2Normal;
+  v2Normal[0] = v2AlongProjectedLine[1];
+  v2Normal[1] = -v2AlongProjectedLine[0];
+
+  double dNormDist = v2A * v2Normal;
+  if (fabs(dNormDist) > mCamera.LargestRadiusInImage())
+    return false;
+
+  double dMinLen =
+      min(v2AlongProjectedLine * v2A, v2AlongProjectedLine * v2B) - 0.05;
+  double dMaxLen =
+      max(v2AlongProjectedLine * v2A, v2AlongProjectedLine * v2B) + 0.05;
+  if (dMinLen < -2.0)
+    dMinLen = -2.0;
+  if (dMaxLen < -2.0)
+    dMaxLen = -2.0;
+  if (dMinLen > 2.0)
+    dMinLen = 2.0;
+  if (dMaxLen > 2.0)
+    dMaxLen = 2.0;
+
+  // Find current-frame corners which might match this
+  PatchFinder Finder;
+  Finder.MakeTemplateCoarseNoWarp(kSrc, nLevel, irLevelPos);
+  if (Finder.TemplateBad())
+    return false;
+
+  vector<Vector<2>> &vv2Corners = kTarget.aLevels[nLevel].vImplaneCorners;
+  vector<ImageRef> &vIR = kTarget.aLevels[nLevel].vCorners;
+  if (!kTarget.aLevels[nLevel].bImplaneCornersCached) {
+    for (unsigned int i = 0; i < vIR.size();
+         i++) // over all corners in target img..
+      vv2Corners.push_back(imUnProj[ir(LevelZeroPos(vIR[i], nLevel))]);
+    kTarget.aLevels[nLevel].bImplaneCornersCached = true;
+  }
+
+  int nBest = -1;
+  int nBestZMSSD = Finder.mnMaxSSD + 1;
+  double dMaxDistDiff = mCamera.OnePixelDist() * (4.0 + 1.0 * nLevelScale);
+  double dMaxDistSq = dMaxDistDiff * dMaxDistDiff;
+
+  for (unsigned int i = 0; i < vv2Corners.size();
+       i++) // over all corners in target img..
+  {
+    Vector<2> v2Im = vv2Corners[i];
+    double dDistDiff = dNormDist - v2Im * v2Normal;
+    if (dDistDiff * dDistDiff > dMaxDistSq)
+      continue; // skip if not along epi line
+    if (v2Im * v2AlongProjectedLine < dMinLen)
+      continue; // skip if not far enough along line
+    if (v2Im * v2AlongProjectedLine > dMaxLen)
+      continue; // or too far
+    int nZMSSD = Finder.ZMSSDAtPoint(kTarget.aLevels[nLevel].im, vIR[i]);
+    if (nZMSSD < nBestZMSSD) {
+      nBest = i;
+      nBestZMSSD = nZMSSD;
+    }
+  }
+
+  if (nBest == -1)
+    return false; // Nothing found.
+
+  //  Found a likely candidate along epipolar ray
+  Finder.MakeSubPixTemplate();
+  Finder.SetSubPixPos(LevelZeroPos(vIR[nBest], nLevel));
+  bool bSubPixConverges = Finder.IterateSubPixToConvergence(kTarget, 10);
+  if (!bSubPixConverges)
+    return false;
+
+  // Now triangulate the 3d point...
+  Vector<3> v3New;
+  v3New = kTarget.se3CfromW.inverse() *
+          ReprojectPoint(kSrc.se3CfromW * kTarget.se3CfromW.inverse(),
+                         mCamera.UnProject(v2RootPos),
+                         mCamera.UnProject(Finder.GetSubPixPos()));
+
+  MapPoint *pNew = new MapPoint;
+  pNew->v3WorldPos = v3New;
+  pNew->pMMData = new MapMakerData();
+
+  // Patch source stuff:
+  pNew->pPatchSourceKF = &kSrc;
+  pNew->nSourceLevel = nLevel;
+  pNew->v3Normal_NC = makeVector(0, 0, -1);
+  pNew->irCenter = irLevelPos;
+  pNew->v3Center_NC = unproject(mCamera.UnProject(v2RootPos));
+  pNew->v3OneRightFromCenter_NC =
+      unproject(mCamera.UnProject(v2RootPos + vec(ImageRef(nLevelScale, 0))));
+  pNew->v3OneDownFromCenter_NC =
+      unproject(mCamera.UnProject(v2RootPos + vec(ImageRef(0, nLevelScale))));
+
+  normalize(pNew->v3Center_NC);
+  normalize(pNew->v3OneDownFromCenter_NC);
+  normalize(pNew->v3OneRightFromCenter_NC);
+
+  pNew->RefreshPixelVectors();
+
+  mMap.vpPoints.push_back(pNew);
+  mqNewQueue.push(pNew);
+  Measurement m;
+  m.Source = Measurement::SRC_ROOT;
+  m.v2RootPos = v2RootPos;
+  m.nLevel = nLevel;
+  m.bSubPix = true;
+  kSrc.mMeasurements[pNew] = m;
+
+  m.Source = Measurement::SRC_EPIPOLAR;
+  m.v2RootPos = Finder.GetSubPixPos();
+  kTarget.mMeasurements[pNew] = m;
+  pNew->pMMData->sMeasurementKFs.insert(&kSrc);
+  pNew->pMMData->sMeasurementKFs.insert(&kTarget);
+  return true;
+}
 //
 // double MapMaker::KeyFrameLinearDist(KeyFrame &k1, KeyFrame &k2) {
 //  Vector<3> v3KF1_CamPos = k1.se3CfromW.inverse().get_translation();
