@@ -722,11 +722,11 @@ KeyFrame *MapMaker::ClosestKeyFrame(KeyFrame &k) {
   return mMap.vpKeyFrames[nClosest];
 }
 
-// double MapMaker::DistToNearestKeyFrame(KeyFrame &kCurrent) {
-//  KeyFrame *pClosest = ClosestKeyFrame(kCurrent);
-//  double dDist = KeyFrameLinearDist(kCurrent, *pClosest);
-//  return dDist;
-//}
+double MapMaker::DistToNearestKeyFrame(KeyFrame &kCurrent) {
+  KeyFrame *pClosest = ClosestKeyFrame(kCurrent);
+  double dDist = KeyFrameLinearDist(kCurrent, *pClosest);
+  return dDist;
+}
 
 bool MapMaker::NeedNewKeyFrame(KeyFrame &kCurrent) {
   KeyFrame *pClosest = ClosestKeyFrame(kCurrent);
@@ -761,52 +761,52 @@ void MapMaker::BundleAdjustAll() {
   BundleAdjust(sAdj, sFixed, sMapPoints, false);
 }
 
-//// Peform a local bundle adjustment which only adjusts
-//// recently added key-frames
-// void MapMaker::BundleAdjustRecent() {
-//  if (mMap.vpKeyFrames.size() < 8) { // Ignore this unless map is big enough
-//    mbBundleConverged_Recent = true;
-//    return;
-//  }
-//
-//  // First, make a list of the keyframes we want adjusted in the adjuster.
-//  // This will be the last keyframe inserted, and its four nearest neighbors
-//  set<KeyFrame *> sAdjustSet;
-//  KeyFrame *pkfNewest = mMap.vpKeyFrames.back();
-//  sAdjustSet.insert(pkfNewest);
-//  vector<KeyFrame *> vClosest = NClosestKeyFrames(*pkfNewest, 4);
-//  for (int i = 0; i < 4; i++)
-//    if (vClosest[i]->bFixed == false)
-//      sAdjustSet.insert(vClosest[i]);
-//
-//  // Now we find the set of features which they contain.
-//  set<MapPoint *> sMapPoints;
-//  for (set<KeyFrame *>::iterator iter = sAdjustSet.begin();
-//       iter != sAdjustSet.end(); iter++) {
-//    map<MapPoint *, Measurement> &mKFMeas = (*iter)->mMeasurements;
-//    for (meas_it jiter = mKFMeas.begin(); jiter != mKFMeas.end(); jiter++)
-//      sMapPoints.insert(jiter->first);
-//  };
-//
-//  // Finally, add all keyframes which measure above points as fixed keyframes
-//  set<KeyFrame *> sFixedSet;
-//  for (vector<KeyFrame *>::iterator it = mMap.vpKeyFrames.begin();
-//       it != mMap.vpKeyFrames.end(); it++) {
-//    if (sAdjustSet.count(*it))
-//      continue;
-//    bool bInclude = false;
-//    for (meas_it jiter = (*it)->mMeasurements.begin();
-//         jiter != (*it)->mMeasurements.end(); jiter++)
-//      if (sMapPoints.count(jiter->first)) {
-//        bInclude = true;
-//        break;
-//      }
-//    if (bInclude)
-//      sFixedSet.insert(*it);
-//  }
-//
-//  BundleAdjust(sAdjustSet, sFixedSet, sMapPoints, true);
-//}
+// Peform a local bundle adjustment which only adjusts
+// recently added key-frames
+void MapMaker::BundleAdjustRecent() {
+  if (mMap.vpKeyFrames.size() < 8) { // Ignore this unless map is big enough
+    mbBundleConverged_Recent = true;
+    return;
+  }
+
+  // First, make a list of the keyframes we want adjusted in the adjuster.
+  // This will be the last keyframe inserted, and its four nearest neighbors
+  set<KeyFrame *> sAdjustSet;
+  KeyFrame *pkfNewest = mMap.vpKeyFrames.back();
+  sAdjustSet.insert(pkfNewest);
+  vector<KeyFrame *> vClosest = NClosestKeyFrames(*pkfNewest, 4);
+  for (int i = 0; i < 4; i++)
+    if (vClosest[i]->bFixed == false)
+      sAdjustSet.insert(vClosest[i]);
+
+  // Now we find the set of features which they contain.
+  set<MapPoint *> sMapPoints;
+  for (set<KeyFrame *>::iterator iter = sAdjustSet.begin();
+       iter != sAdjustSet.end(); iter++) {
+    map<MapPoint *, Measurement> &mKFMeas = (*iter)->mMeasurements;
+    for (meas_it jiter = mKFMeas.begin(); jiter != mKFMeas.end(); jiter++)
+      sMapPoints.insert(jiter->first);
+  };
+
+  // Finally, add all keyframes which measure above points as fixed keyframes
+  set<KeyFrame *> sFixedSet;
+  for (vector<KeyFrame *>::iterator it = mMap.vpKeyFrames.begin();
+       it != mMap.vpKeyFrames.end(); it++) {
+    if (sAdjustSet.count(*it))
+      continue;
+    bool bInclude = false;
+    for (meas_it jiter = (*it)->mMeasurements.begin();
+         jiter != (*it)->mMeasurements.end(); jiter++)
+      if (sMapPoints.count(jiter->first)) {
+        bInclude = true;
+        break;
+      }
+    if (bInclude)
+      sFixedSet.insert(*it);
+  }
+
+  BundleAdjust(sAdjustSet, sFixedSet, sMapPoints, true);
+}
 
 // Common bundle adjustment code. This creates a bundle-adjust instance,
 // populates it, and runs it.
