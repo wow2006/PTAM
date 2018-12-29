@@ -10,12 +10,12 @@
 
 #include <gvars3/instances.h>
 
+#include "PTAM/Bundle.hpp"
 #include "PTAM/HomographyInit.hpp"
 #include "PTAM/KeyFrame.hpp"
 #include "PTAM/MapMaker.hpp"
 #include "PTAM/MapPoint.hpp"
 #include "PTAM/PatchFinder.hpp"
-#include "PTAM/Bundle.hpp"
 
 //#include "SmallMatrixOpts.h"
 
@@ -444,51 +444,52 @@ void MapMaker::ApplyGlobalTransformationToMap(SE3<> se3NewFromOld) {
 //    (*mMap.vpPoints[i]).RefreshPixelVectors();
 //  }
 //}
-//
-//// The tracker entry point for adding a new keyframe;
-//// the tracker thread doesn't want to hang about, so
-//// just dumps it on the top of the mapmaker's queue to
-//// be dealt with later, and return.
-// void MapMaker::AddKeyFrame(KeyFrame &k) {
-//  KeyFrame *pK = new KeyFrame;
-//  *pK = k;
-//  pK->pSBI = NULL; // Mapmaker uses a different SBI than the tracker, so will
-//                   // re-gen its own
-//  mvpKeyFrameQueue.push_back(pK);
-//  if (mbBundleRunning) // Tell the mapmaker to stop doing low-priority stuff
-//  and
-//                       // concentrate on this KF first.
-//    mbBundleAbortRequested = true;
-//}
-//
-//// Mapmaker's code to handle incoming key-frames.
-// void MapMaker::AddKeyFrameFromTopOfQueue() {
-//  if (mvpKeyFrameQueue.size() == 0)
-//    return;
-//
-//  KeyFrame *pK = mvpKeyFrameQueue[0];
-//  mvpKeyFrameQueue.erase(mvpKeyFrameQueue.begin());
-//  pK->MakeKeyFrame_Rest();
-//  mMap.vpKeyFrames.push_back(pK);
-//  // Any measurements? Update the relevant point's measurement counter status
-//  // map
-//  for (meas_it it = pK->mMeasurements.begin(); it != pK->mMeasurements.end();
-//       it++) {
-//    it->first->pMMData->sMeasurementKFs.insert(pK);
-//    it->second.Source = Measurement::SRC_TRACKER;
-//  }
-//
-//  // And maybe we missed some - this now adds to the map itself, too.
-//  ReFindInSingleKeyFrame(*pK);
-//
-//  AddSomeMapPoints(3); // .. and add more map points by epipolar search.
-//  AddSomeMapPoints(0);
-//  AddSomeMapPoints(1);
-//  AddSomeMapPoints(2);
-//
-//  mbBundleConverged_Full = false;
-//  mbBundleConverged_Recent = false;
-//}
+
+// The tracker entry point for adding a new keyframe;
+// the tracker thread doesn't want to hang about, so
+// just dumps it on the top of the mapmaker's queue to
+// be dealt with later, and return.
+void MapMaker::AddKeyFrame(KeyFrame &k) {
+  KeyFrame *pK = new KeyFrame;
+  *pK = k;
+  pK->pSBI = NULL; // Mapmaker uses a different SBI than the tracker, so will
+                   // re-gen its own
+  mvpKeyFrameQueue.push_back(pK);
+  // Tell the mapmaker to stop doing low-priority stuff and
+  // concentrate on this KF first.
+  if (mbBundleRunning)
+    mbBundleAbortRequested = true;
+}
+
+// Mapmaker's code to handle incoming key-frames.
+void MapMaker::AddKeyFrameFromTopOfQueue() {
+  if (mvpKeyFrameQueue.size() == 0) {
+    return;
+  }
+
+  KeyFrame *pK = mvpKeyFrameQueue[0];
+  mvpKeyFrameQueue.erase(mvpKeyFrameQueue.begin());
+  pK->MakeKeyFrame_Rest();
+  mMap.vpKeyFrames.push_back(pK);
+  // Any measurements? Update the relevant point's measurement counter status
+  // map
+  for (meas_it it = pK->mMeasurements.begin(); it != pK->mMeasurements.end();
+       it++) {
+    it->first->pMMData->sMeasurementKFs.insert(pK);
+    it->second.Source = Measurement::SRC_TRACKER;
+  }
+
+  // And maybe we missed some - this now adds to the map itself, too.
+  ReFindInSingleKeyFrame(*pK);
+
+  AddSomeMapPoints(3); // .. and add more map points by epipolar search.
+  AddSomeMapPoints(0);
+  AddSomeMapPoints(1);
+  AddSomeMapPoints(2);
+
+  mbBundleConverged_Full = false;
+  mbBundleConverged_Recent = false;
+}
 
 // Tries to make a new map point out of a single candidate point
 // by searching for that point in another keyframe, and triangulating
