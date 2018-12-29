@@ -18,60 +18,60 @@ namespace PTAM {
 
 class SmallBlurryImage {
 public:
-  /** 
-  * @brief 
-  */
+  /**
+   * @brief
+   */
   SmallBlurryImage();
 
-  /** 
-  * @brief 
-  * 
-  * @param kf
-  * @param dBlur
-  */
+  /**
+   * @brief
+   *
+   * @param kf
+   * @param dBlur
+   */
   SmallBlurryImage(KeyFrame &kf, double dBlur = 2.5);
 
-  /** 
-  * @brief 
-  * 
-  * @param kf
-  * @param dBlur
-  */
+  /**
+   * @brief
+   *
+   * @param kf
+   * @param dBlur
+   */
   void MakeFromKF(KeyFrame &kf, double dBlur = 2.5);
 
-  /** 
-  * @brief 
-  */
+  /**
+   * @brief
+   */
   void MakeJacs();
 
-  /** 
-  * @brief 
-  * 
-  * @param other
-  * 
-  * @return 
-  */
+  /**
+   * @brief
+   *
+   * @param other
+   *
+   * @return
+   */
   double ZMSSD(SmallBlurryImage &other);
 
-  /** 
-  * @brief 
-  * 
-  * @param other
-  * @param nIterations
-  * 
-  * @return 
-  */
+  /**
+   * @brief
+   *
+   * @param other
+   * @param nIterations
+   *
+   * @return
+   */
   std::pair<SE2<>, double> IteratePosRelToTarget(SmallBlurryImage &other,
                                                  int nIterations = 10);
 
-  /** 
-  * @brief 
-  * 
-  * @param se2
-  * @param camera
-  * 
-  * @return 
-  */
+  /**
+   * @brief
+   *
+   * @param se2
+   * @param camera
+   *
+   * @return
+   */
   static SE3<> SE3fromSE2(SE2<> se2, ATANCamera camera);
 
 protected:
