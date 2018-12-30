@@ -11,9 +11,8 @@ find_package(CVD REQUIRED)
 find_package(TooN REQUIRED)
 find_package(GVars3 REQUIRED)
 
-add_executable(
-  PTAM_DEMO
-  main.cpp
+add_library(
+  PTAM
   src/System.cpp
   src/GLWindow2.cpp
   src/GLWindowMenu.cpp
@@ -40,13 +39,13 @@ add_executable(
 )
 
 target_include_directories(
-  PTAM_DEMO
+  PTAM
   PUBLIC
   ${CMAKE_SOURCE_DIR}/include
 )
 
 target_link_libraries(
-  PTAM_DEMO
+  PTAM
   PUBLIC
   CVD::CVD
   TooN::TooN
@@ -54,20 +53,40 @@ target_link_libraries(
 )
 
 target_compile_features(
-  PTAM_DEMO
+  PTAM
   PUBLIC
   cxx_std_17
 )
 
 target_compile_options(
-  PTAM_DEMO
+  PTAM
   PUBLIC
   $<$<CXX_COMPILER_ID:Clang>:-Weverything -fcolor-diagnostics -Wno-c++98-compat>
 )
 
 target_compile_definitions(
-  PTAM_DEMO
+  PTAM
   PUBLIC
   CVD_HAVE_TOON=1
 )
+
+add_executable(
+  PTAM_DEMO
+  main.cpp
+)
+
+target_link_libraries(
+  PTAM_DEMO
+  PUBLIC
+  PTAM
+)
+
+option(ENABLE_TEST "Enable test cases" ON)
+if(ENABLE_TEST)
+  enable_testing()
+
+  find_package(GTest REQUIRED)
+
+  add_subdirectory(tests)
+endif(ENABLE_TEST)
 
