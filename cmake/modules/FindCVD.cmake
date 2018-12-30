@@ -6,7 +6,7 @@ find_path(
 
 find_library(
   CVD_LIBRARY
-  NAMES CVD
+  NAMES CVD cvd
   PATH_SUFFIXES lib
 )
 
